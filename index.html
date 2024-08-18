@@ -1,37 +1,42 @@
 <!DOCTYPE html>
-
-
 <html lang="en">
   <head>
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jacquard+12&display=swap" rel="stylesheet"> -->
     <title>Personal Site</title>
     <style>
-        /* body {
-            font-family: "Jacquard 12", system-ui;
-            font-weight: 20;
-            font-style: normal;
-        } */
+      #emoji-link {
+        text-decoration: none;
+        color: inherit;
+        transition: color 0.3s ease;
+      }
+
+      #emoji-link:hover {
+        cursor: pointer;
+        /* color: #007BFF; /* Change the color on hover */
+        /* text-decoration: underline; Underline the text on hover */
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>Levi Adissi</h1>
-      <img src="https://pbs.twimg.com/profile_images/1721371493484126208/SMUXLNaF_400x400.jpg">
+      <h1>
+        <a id="emoji-link" href="https://example.com" target="_blank">
+          🦧 Levi Adissi
+        </a>
+      </h1>
       <section>
-        <p>Thanks for stopping by. This is my personal website. As I learn more dev skills I will update this site.</p>
-        <h3>Interests:</h3>
+        <p id="greeting">Hey! 👋 Thanks for stopping by. This is my personal website.</p>
+        <h3>🔨 Projects:</h3>
+        <ul>
+          <li><a href="https://onwordle.netlify.app">On Wordle</a> - a tool for players of Wordle</li>
+          <li>TCAI (in progress)</li>
+        </ul>
+        <h3>💭 Interests:</h3>
         <ul>
           <li>building products</li>
           <li>LLM's</li>
           <li>music production</li>
         </ul>
-        <h3>Projects:</h3>
-        <ul>
-          <li>TCAI</li>
-        </ul>
-        <h3>You can get in touch with me here:</h3>
+        <h3>➕ You can get in touch with me here:</h3>
         <ul>
           <li><a href="https://twitter.com/LeviAdissi">Twitter</a></li>
           <li><a href="https://www.linkedin.com/in/levi-adissi">LinkedIn</a></li>
@@ -39,9 +44,76 @@
       </section>
     </main>
     <footer>
-      <p>
-        No Copyright
-      </p>
+      <p>No Copyright</p>
     </footer>
+
+    <script>
+      const animalEmojis = {
+        "🐵": "swinging by",
+        "🐒": "monkeying around",
+        "🦍": "gorilla-ing through",
+        "🦧": "hanging out",
+        "🐶": "wagging by",
+        "🐕": "barking by",
+        "🦮": "guiding by",
+        "🐩": "prancing by",
+        "🐺": "howling by",
+        "🦊": "sneaking by",
+        "🦝": "raccooning by",
+        "🐱": "meowing by",
+        "🐈": "purring by",
+        "🦁": "roaring by",
+        "🐯": "prowling by",
+        "🐅": "stalking by",
+        "🐆": "leaping by",
+        "🐴": "trotting by",
+        "🦄": "galloping by",
+        "🦓": "zebra-ing by",
+        "🐘": "stomping by",
+        "🦏": "charging by",
+        "🐢": "slowly walking by",
+        "🐇": "hopping by",
+        "🐿️": "scurrying by",
+        "🦔": "rolling by",
+        "🐸": "hopping by",
+        "🐍": "slithering by",
+        "🐉": "flying by",
+        "🦕": "lumbering by",
+        "🦖": "stomping by",
+        "🐙": "swimming by",
+        "🦈": "sharking by",
+        "🐋": "whale-ing by",
+        "🐟": "swimming by",
+        "🐠": "floating by",
+        "🐡": "puffing by",
+        "🦋": "fluttering by",
+        "🐝": "buzzing by",
+        "🪲": "crawling by",
+        "🦗": "hopping by",
+        "🪰": "flying by",
+        "🦨": "skunking by",
+        "🦫": "beavering by",
+        "🦘": "jumping by",
+        "🦥": "slowly moving by",
+        "🐨": "koala-ing by",
+        "🐼": "panda-ing by",
+        "🦩": "flamingo-ing by"
+      };
+
+      const emojiElement = document.getElementById('emoji-link');
+      const greetingElement = document.getElementById('greeting');
+
+      emojiElement.addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent the default link behavior
+        const emojis = Object.keys(animalEmojis);
+        const randomIndex = Math.floor(Math.random() * emojis.length);
+        const selectedEmoji = emojis[randomIndex];
+        const verb = animalEmojis[selectedEmoji];
+
+        emojiElement.textContent = selectedEmoji + " Levi Adissi";
+        greetingElement.innerHTML = `Hey! 👋 Thanks for ${verb}. This is my personal website.`;
+        emojiElement.href = "https://example.com"; // Set the link to the target URL
+      });
+    </script>
   </body>
 </html>
