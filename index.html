@@ -3,6 +3,34 @@
   <head>
     <title>Personal Site</title>
     <style>
+      /* Base font size for all devices */
+      body {
+        font-size: 18px; /* Base font size */
+        line-height: 1.6; /* Improve readability with appropriate line height */
+        padding: 20px;
+        margin: 0;
+        font-family: Inter, sans-serif;
+      }
+
+      /* Increase font size on larger screens */
+      @media (min-width: 600px) {
+        body {
+          font-size: 20px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        body {
+          font-size: 22px;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        body {
+          font-size: 24px;
+        }
+      }
+
       #emoji-link {
         text-decoration: none;
         color: inherit;
@@ -11,8 +39,20 @@
 
       #emoji-link:hover {
         cursor: pointer;
-        /* color: #007BFF; /* Change the color on hover */
-        /* text-decoration: underline; Underline the text on hover */
+        color: #3c9600; /* Change the color on hover */
+      }
+
+      h1 {
+        font-size: 1.5em; /* Adjust the size of the header */
+        margin-bottom: 20px;
+      }
+
+      p, ul, li {
+        margin-bottom: 15px; /* Add space between paragraphs and list items */
+      }
+
+      ul {
+        padding-left: 20px; /* Add padding to the left of list items */
       }
     </style>
   </head>
@@ -24,7 +64,7 @@
         </a>
       </h1>
       <section>
-        <p id="greeting">Hey! 👋 Thanks for stopping by. This is my personal website.</p>
+        <p id="greeting">Hey! 👋 Thanks for stopping by.</p>
         <h3>🔨 Projects:</h3>
         <ul>
           <li><a href="https://onwordle.netlify.app">On Wordle</a> - a tool for players of Wordle</li>
@@ -112,7 +152,6 @@
 
         emojiElement.textContent = selectedEmoji + " Levi Adissi";
         greetingElement.innerHTML = `Hey! 👋 Thanks for ${verb}. This is my personal website.`;
-        emojiElement.href = "https://example.com"; // Set the link to the target URL
       });
     </script>
   </body>
