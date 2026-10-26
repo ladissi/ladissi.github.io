@@ -251,6 +251,10 @@
   .phase-words span{flex:1;text-align:center;padding:6px 10px;border-radius:6px;font-size:13px;line-height:18px;
        transition:background-color var(--dur-scene) var(--ease-scene),color var(--dur-scene) var(--ease-scene)}
   .phase-words span.is-now{background:var(--accent-tint);color:var(--accent)}
+  /* Levi 10-26: the running phase has to be obvious at a glance. It leads by weight and size as well as the chip,
+     the same rule the picker follows (Carbon, Stripe): semibold, 15px, in the accent; the rest stay regular and grey.
+     Each word keeps its own equal column, so the change never moves its neighbours. */
+  .phase-words span.is-now{font-weight:600;font-size:15px}
   .phase-track{height:4px;border-radius:2px;overflow:hidden}
   .phase-track i{background:var(--accent)}
   .cycle{font-variant-numeric:tabular-nums}
@@ -284,6 +288,171 @@
   .stage{margin:8px 0}
   #guide .mast .back{order:-1}
   @media (prefers-reduced-motion:reduce){.seg button{transition-duration:.01ms}}
+
+  /* Levi 10-26: the pill and its line live in the tab, so the facts row is gone. The tab is a card holding the
+     button, the pill and the line; the button's hit area covers the whole card and the link sits above it. */
+  .seg{padding:4px;gap:4px;align-items:stretch}
+  .tab{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+       padding:10px 12px 12px;border-radius:6px;
+       transition:background-color var(--dur-ui) var(--ease-ui)}
+  .tab:has([aria-selected="true"]){background:var(--accent-tint)}
+  .seg .tab button{position:static;flex:none;height:auto;padding:0;border-radius:0;background:none;text-align:left;
+       font:500 14px/20px var(--body)}
+  .seg .tab button::after{inset:0;height:auto;transform:none;border-radius:6px}
+  .tab:hover button{color:var(--paper-ink)}
+  .seg .tab button[aria-selected="true"]{background:none;color:var(--accent)}
+  .tab-line{margin:0;font-size:13px;line-height:18px;color:var(--paper-muted)}
+  /* The pill is a link to the study. A lit fill with a soft rim and a glint across it; the ink stays dark on the
+     lightest-to-darkest fill, so the shine can only add contrast. The hit area grows to 44px past the pill. */
+  .pill-link{position:relative;z-index:1;display:inline-flex;border-radius:9999px;text-decoration:none;
+       transition:transform var(--dur-ui) var(--ease-ui),box-shadow var(--dur-ui) var(--ease-ui)}
+  /* A tag, not a button: 22px tall. The tap area still reaches 44px, mostly downward into the card's padding so
+     it does not cover the exercise name above it. */
+  .pill-link::after{content:"";position:absolute;inset:-6px -4px -16px}
+  .tab .badge{height:22px;gap:4px;padding:0 7px 0 9px;font-size:12px;font-weight:500;color:var(--accent);
+       background:linear-gradient(180deg,#EEF4EB 0%,#D2E2CE 60%,#C6D9C2 100%);
+       border:1px solid rgba(44,87,65,.22);
+       box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 1px rgba(24,33,28,.06)}
+  .tab .glint{background-image:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%)}
+  .pill-arrow{position:relative;z-index:1;width:9px;height:9px;flex:none;opacity:.75}
+  .pill-link:hover .pill-arrow{opacity:1}
+
+  /* Two bars. The top one is this cycle, one segment per phase under its word; the bottom one is the whole
+     session, one segment per cycle, over "cycle 2 of 4". */
+  .phase-track,.session-track{display:flex;gap:4px;height:4px;background:none;border-radius:0;overflow:visible}
+  .phase-track i,.session-track i{display:block;flex:1;width:auto;height:100%;border-radius:2px;overflow:hidden;
+       background:var(--paper-line);transform:none}
+  .phase-track b,.session-track b{display:block;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left}
+  .session{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+  .session-track{width:100%;height:2px;margin-top:6px}
+  /* On a phone the tabs wrap to several lines, so the sheet above the disc gives back what it can. */
+  @media (max-width:480px){
+    .pick{margin-top:12px;gap:12px}
+    .tab{padding:8px 10px 10px;gap:6px}
+    .tray{gap:12px}
+    .session{gap:8px}
+  }
+  .session-track b{background:var(--paper-ink)}
+
+  @media (prefers-reduced-motion:reduce){.tab{transition-duration:.01ms}}
+  /* ---- Levi 10-26 round 3 (mock options) ----
+     The tag is a detail, not a button: no arrow, no border, no drop shadow. A soft tint with a small four point
+     spark that twinkles, and a glint that passes over the fill. It still opens the study. */
+  .tab .badge{height:20px;gap:4px;padding:0 8px 0 6px;border:0;font-size:12px;font-weight:500;color:var(--accent);
+       background:linear-gradient(180deg,#E9F0E5 0%,#D9E5D5 100%);box-shadow:inset 0 0 0 1px rgba(44,87,65,.10)}
+  .spark{position:relative;z-index:1;width:9px;height:9px;flex:none;color:var(--accent);transform-origin:50% 50%}
+  .pill-link:hover .spark,.pill-link:focus-visible .spark{animation:twinkle 900ms var(--ease-scene)}
+  @keyframes twinkle{0%{transform:scale(1) rotate(0)}45%{transform:scale(1.35) rotate(45deg)}100%{transform:scale(1) rotate(90deg)}}
+  .pill-link{transition:none}
+  .pill-link:hover .badge{background:linear-gradient(180deg,#E3ECDF 0%,#D2E1CD 100%)}
+  @media (prefers-reduced-motion:reduce){.pill-link:hover .spark,.pill-link:focus-visible .spark{animation:none}}
+
+  /* tag layout a: one row per tab, the name on the left and the tag on the right. */
+  html[data-tag="a"] .tab{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:10px 10px 10px 14px;min-height:44px}
+  html[data-tag="a"] .pill-link::after{inset:-12px -6px}
+  @media (max-width:520px){html[data-tag="a"] .tab{flex-direction:column;align-items:flex-start;gap:6px;padding:9px 10px 10px}
+    html[data-tag="a"] .pill-link::after{inset:-6px -4px -14px}}
+
+  /* tag layout b: a compact segmented control, centred, the tag tucked under the name. */
+  html[data-tag="b"] .tab{align-items:center;text-align:center;gap:5px;padding:9px 10px 11px}
+  html[data-tag="b"] .seg .tab button{text-align:center}
+  html[data-tag="b"] .pill-link::after{inset:-4px -4px -12px}
+
+  /* tag layout c: no box at all. Two names as text tabs with a hairline under the picked one, each tag beside
+     its name like a footnote. */
+  html[data-tag="c"] .seg{background:none;border:0;box-shadow:none;padding:0;gap:28px;border-bottom:1px solid var(--paper-line);border-radius:0}
+  html[data-tag="c"] .tab{flex:none;flex-direction:row;align-items:center;gap:8px;padding:10px 0 12px;border-radius:0;background:none}
+  html[data-tag="c"] .tab:has([aria-selected="true"]){background:none}
+  html[data-tag="c"] .tab::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:2px;background:var(--accent);
+       transform:scaleX(0);transition:transform var(--dur-scene) var(--ease-scene)}
+  html[data-tag="c"] .tab:has([aria-selected="true"])::before{transform:scaleX(1)}
+  html[data-tag="c"] .seg .tab button{font-size:15px}
+  html[data-tag="c"] .seg .tab button[aria-selected="true"]{color:var(--paper-ink)}
+  html[data-tag="c"] .pill-link::after{inset:-12px -6px}
+  @media (max-width:520px){html[data-tag="c"] .seg{gap:20px}html[data-tag="c"] .tab{flex-direction:column;align-items:flex-start;gap:4px}
+    html[data-tag="c"] .pill-link::after{inset:-4px -4px -12px}}
+  @media (prefers-reduced-motion:reduce){html[data-tag="c"] .tab::before{transition-duration:.01ms}}
+
+
+  /* ---- Levi 10-26 round 4 ---- */
+  /* The tag: smaller, and part of the tab, so it never takes a tap somewhere else. */
+  .pill-link{pointer-events:none}
+  .pill-link::after{display:none}
+  .tab .badge{height:18px;gap:3px;padding:0 7px 0 5px;font-size:11px;letter-spacing:.01em}
+  .spark{width:8px;height:8px}
+  .tab:hover .spark{animation:twinkle 900ms var(--ease-scene)}
+  @media (prefers-reduced-motion:reduce){.tab:hover .spark{animation:none}}
+
+  /* The tray: the session line on top (cycle left, time left right), the words, one bar, begin, the study. */
+  .tray{gap:12px}
+  .meta{display:flex;justify-content:space-between;align-items:center;width:100%;font-size:13px;line-height:18px;color:var(--paper-muted)}
+  .meta p{margin:0}
+  .cycle{display:inline-flex;align-items:center;gap:6px;min-width:0;text-align:left}
+  .left{font-variant-numeric:tabular-nums}
+  .is-running .cycle{color:var(--paper-ink)}
+  .tick{width:14px;height:14px;flex:none}
+  .tick path{fill:none;stroke:var(--accent);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;
+       stroke-dasharray:14;stroke-dashoffset:14;animation:tick-in 520ms 120ms cubic-bezier(.65,0,.35,1) forwards}
+  @keyframes tick-in{to{stroke-dashoffset:0}}
+  .is-done .cycle{color:var(--accent)}
+  .phase{gap:10px;width:100%}
+  .phase-words span{transition:background-color var(--dur-scene) var(--ease-scene),color var(--dur-scene) var(--ease-scene)}
+  .bar{position:relative;width:100%;height:4px;border-radius:2px;background:var(--paper-line);overflow:hidden}
+  .bar i{position:absolute;inset:0;border-radius:2px;transform-origin:left;background:var(--accent)}
+  .bar-fill{transform:scaleX(0)}
+  /* a soft light at the leading edge of the fill */
+  .bar-fill::after{content:"";position:absolute;right:0;top:-2px;bottom:-2px;width:16px;
+       background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.55));opacity:0;transition:opacity var(--dur-ui) var(--ease-ui)}
+  .is-running .bar-fill::after{opacity:1}
+  .bar-ghost{opacity:0}
+  .study{color:var(--paper-muted);text-decoration:underline;text-decoration-color:var(--paper-line);text-underline-offset:3px;
+       position:relative;transition:color var(--dur-ui) var(--ease-ui)}
+  .study:hover{color:var(--paper-ink);text-decoration-color:currentColor}
+  .study::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
+  @media (max-width:480px){.tray{gap:10px}}
+  @media (prefers-reduced-motion:reduce){.tick path{animation:none;stroke-dashoffset:0}.study,.bar-fill::after{transition-duration:.01ms}}
+
+  /* Picker hierarchy, from the Carbon and Stripe read (RESEARCH/BREATHE_PICKER_HIERARCHY_CARBON_STRIPE.md): the
+     name leads by weight and ink, the tag is a quiet second line in its name's own colour, 4px under it, and the
+     picked option changes weight as well as fill. Carbon's productive easing for the switch. */
+  .seg{padding:4px;gap:4px}
+  .tab{gap:4px;padding:12px 16px;transition:background-color 110ms cubic-bezier(.2,0,.38,.9)}
+  .seg .tab button{font:400 14px/20px var(--body);color:var(--paper-muted);transition:color 110ms cubic-bezier(.2,0,.38,.9)}
+  .seg .tab button[aria-selected="true"]{font-weight:600;color:var(--paper-ink)}
+  .tab .badge{height:18px;padding:0 7px 0 6px;font-weight:400;color:var(--paper-muted);
+       background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px var(--paper-line)}
+  .tab:has([aria-selected="true"]) .badge{color:var(--paper-ink);background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px rgba(44,87,65,.18)}
+  .spark{color:currentColor;opacity:.7}
+  .tab:hover .spark{animation-duration:400ms}
+  html[data-tag="b"] .tab{align-items:center;text-align:center;padding:12px 16px}
+  html[data-tag="b"] .meta{justify-content:center;gap:6px}
+  html[data-tag="b"] .meta .left::before{content:"\00B7";margin-right:6px}
+
+  /* Round 5: the cycles as short segments over the words, and the study line smaller. */
+  .cycles{display:flex;justify-content:center;gap:6px;height:3px}
+  .cycles i{display:block;width:28px;height:3px;border-radius:2px;background:var(--paper-line);overflow:hidden}
+  .cycles b{display:block;width:100%;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left}
+  .study{margin:0;max-width:44ch;text-align:center;font-size:12px;line-height:16px;color:var(--paper-muted);text-decoration:none}
+  .study::after{display:none}
+  .study a{color:var(--paper-muted);text-decoration:underline;text-decoration-color:var(--paper-line);text-underline-offset:2px;
+       transition:color var(--dur-ui) var(--ease-ui)}
+  .study a:hover{color:var(--paper-ink);text-decoration-color:currentColor}
+
+  /* ---- round 6 ---- */
+  .study{font-size:10px;line-height:14px;font-style:italic;max-width:52ch}
+  /* "2/4" and the time, small, under the bar. Hidden until a run starts; kept at the end. */
+  .stage{position:relative}
+  .pm{position:absolute;left:0;right:0;margin:0;display:none;justify-content:center;align-items:baseline;gap:6px;
+       font-size:12px;line-height:16px;color:var(--paper-muted);font-variant-numeric:tabular-nums;pointer-events:none;
+       opacity:0;transition:opacity var(--dur-scene) var(--ease-scene)}
+  .is-running .pm,.is-done .pm{opacity:1}
+  .pm .dot{opacity:.6}
+  .pm-line{position:static;display:none;justify-content:space-between;font-size:11px;line-height:14px;margin-top:-2px}
+  /* Levi 10-26 round 7: progress stays at the bottom, with the words and the button, so status and what to do are
+     read in one place. */
+  .pm-line{display:flex}
+  @media (prefers-reduced-motion:reduce){.pm{transition-duration:.01ms}}
+
   
   </style>
 </head>
@@ -311,19 +480,22 @@
       <div class="pick">
         <h1 class="type-page-title">breathing exercises</h1>
         <div class="seg" role="tablist" aria-label="pick an exercise" id="seg"></div>
-        <div class="facts" id="facts"></div>
       </div>
       <div class="stage" id="stage">
         <canvas id="disc" aria-hidden="true"></canvas>
         <p class="count" id="count" aria-hidden="true" hidden></p>
       </div>
       <div class="tray">
+        <div class="cycles" id="cycles" aria-hidden="true"></div>
+        <p class="cycle sr" id="cycle"></p>
+        <p class="left" id="left" hidden></p>
         <div class="phase" aria-hidden="true">
           <div class="phase-words" id="words"></div>
-          <div class="phase-track"><i id="fill"></i></div>
+          <div class="bar" id="bar"><i class="bar-ghost" id="ghost"></i><i class="bar-fill" id="fill"></i></div>
+          <p class="pm pm-line"><span class="m-cyc"></span><span class="m-left"></span></p>
         </div>
-        <p class="cycle" id="cycle" aria-hidden="true"></p>
         <button type="button" class="go" id="go">begin</button>
+        <p class="study">based on <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/" target="_blank" rel="noopener">brief structured respiration practices enhance mood and reduce physiological arousal<span class="sr"> (opens in a new tab)</span></a></p>
       </div>
       <p class="sr" role="status" id="say"></p>
     </section>
@@ -367,7 +539,7 @@
         slug: "box",
         name: "box breathing",
         line: "four in, four hold, four out, four hold.",
-        pill: { name: "mood enhancing", effect: "mood up 5% of the scale per 5 min dose." },
+        pill: { name: "mood enhancer", effect: "mood up 5% of the scale per 5 min dose." },
         cycles: 4,
         phases: [
           { label: "in",   seconds: 4, disc: 1 },
@@ -380,7 +552,7 @@
         slug: "sigh",
         name: "physiological sigh",
         line: "a second breath in on top of a full one, then a long breath out.",
-        pill: { name: "stress reducing", effect: "anxiety down 6% of the scale per 5 min dose." },
+        pill: { name: "stress reliever", effect: "anxiety down 6% of the scale per 5 min dose." },
         cycles: 3,
         phases: [
           { label: "in",       seconds: 2.5, disc: 0.85 },
@@ -405,6 +577,11 @@
     const nameEl = document.getElementById("exName");
     const wordsEl = document.getElementById("words");
     const fillEl = document.getElementById("fill");
+    const ghostEl = document.getElementById("ghost");
+    const leftEl = document.getElementById("left");
+    const cyclesEl = document.getElementById("cycles");
+    let cSegs = [];
+    const trayEl = document.querySelector(".tray");
     const cycleEl = document.getElementById("cycle");
     const countEl = document.getElementById("count");
     const goEl = document.getElementById("go");
@@ -547,15 +724,63 @@
         phaseIdx = loc.i;
         phaseMarks.push(performance.now());
         for (let i = 0; i < spans.length; i++) spans[i].classList.toggle("is-now", i === loc.i);
+        // The word that starts settles in from a touch smaller, and the bar the last phase filled lets go as a
+        // fading ghost rather than snapping back to empty.
+        if (!mqRM.matches) {
+          spans[loc.i].animate([{ transform: "scale(.94)" }, { transform: "scale(1)" }],
+            { duration: 420, easing: "cubic-bezier(.34,1.56,.64,1)" });
+          if (loc.i === 0 && phaseMarks.length > 1) ghostEl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: "ease-out" });
+        }
         // Label only, once per phase. The countdown is not announced: a screen
         // reader reciting "three, two, one" over a breath is noise.
         sayEl.textContent = loc.p.label;
         cycleEl.textContent = `cycle ${loc.cycle + 1} of ${ex.cycles}`;
       }
     }
-    function setFill(v) {
+    // v is how far into the running phase. One bar under the words fills across the phase that is running.
+    // The line above it says where the session is: the cycle on the left, the time left on the right.
+    const clock = sec => { const t = Math.max(0, Math.ceil(sec - 1e-6)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
+    function setFill(v, loc) {
       fillCur = v;
-      fillEl.style.transform = `scaleX(${v})`;
+      // The fill runs across the whole cycle, an equal share per word, so its edge is always under the word that
+      // is running.
+      fillEl.style.transform = `scaleX(${loc && ex ? (loc.i + v) / ex.phases.length : 0})`;
+      if (ex) {
+        let past = 0;
+        if (loc) for (let i = 0; i < loc.i; i++) past += ex.phases[i].seconds;
+        const cf = loc ? (past + v * loc.p.seconds) / cycleSeconds(ex) : 0;
+        prog.n = ex.cycles; prog.on = !!loc; prog.cycle = loc ? loc.cycle : 0; prog.cf = cf;
+        prog.sf = loc ? (loc.cycle + cf) / ex.cycles : 0;
+        if (loc) {
+          setText(`${loc.cycle + 1}/${ex.cycles}`, clock(totalSeconds(ex) - (loc.cycle + cf) * cycleSeconds(ex)),
+                  String(Math.max(1, Math.ceil(loc.p.seconds * (1 - v) - 1e-6))));
+        }
+      }
+      // The cycles: one short segment each, filling as its cycle runs.
+      if (ex) {
+        let past = 0;
+        if (loc) for (let i = 0; i < loc.i; i++) past += ex.phases[i].seconds;
+        const cf = loc ? (past + v * loc.p.seconds) / cycleSeconds(ex) : 0;
+        for (let c = 0; c < cSegs.length; c++) {
+          const f = trayEl.classList.contains("is-done") ? 1 : !loc ? 0 : c < loc.cycle ? 1 : c === loc.cycle ? cf : 0;
+          cSegs[c].style.transform = `scaleX(${f})`;
+        }
+      }
+      trayEl.classList.toggle("is-running", !!loc);
+      guideEl.classList.toggle("is-running", !!loc);
+      if (!loc || !ex) return;
+      let into = 0;
+      for (let i = 0; i < loc.i; i++) into += ex.phases[i].seconds;
+      const t = clock(totalSeconds(ex) - loc.cycle * cycleSeconds(ex) - into - v * loc.p.seconds);
+      if (leftEl.textContent !== t) leftEl.textContent = t;
+    }
+    function segs(el, n) {
+      el.textContent = "";
+      return Array.from({ length: n }, () => {
+        const i = document.createElement("i"), b = document.createElement("b");
+        i.append(b); el.append(i);
+        return b;
+      });
     }
 
     /* ---------- the disc ---------- */
@@ -568,28 +793,68 @@
       if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     }
-    // One soft disc, sized off the stage's own box so it can never reach the
-    // masthead or the tray at any phase of any exercise.
-    //
-    // The falloff is short on purpose. A gradient that fades from the centre
-    // all the way out has no edge at all: it reads as fog rather than as
-    // something breathing, and at 1440 it filled two thirds of the screen
-    // without ever being a shape. So the body is a flat wash out to 84% of the
-    // radius and the last 16% is the edge.
-    function drawDisc(v) {
-      ctx.clearRect(0, 0, w, h);
-      const cx = w / 2, cy = h / 2;
-      const r = Math.min(w, h) * 0.30 * (0.55 + 0.45 * v);
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      g.addColorStop(0, `rgba(${INK},${DA})`);
-      g.addColorStop(0.84, `rgba(${INK},${DA})`);
-      g.addColorStop(0.94, `rgba(${INK},${DA*0.6})`);
-      g.addColorStop(1, `rgba(${INK},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
+    // Levi 10-26: the disc is alive. Three translucent layers, each its own slowly turning blob, drift around
+    // the centre; where they overlap they add up to the old disc's density, so the body reads as before and the
+    // edge is what moves. The soft edge is a shadow blur, which every browser draws (canvas filter is not
+    // everywhere). Under reduced motion it is one still shape.
+    const LA = 1 - Math.pow(1 - DA, 1 / 3);
+    const LAYERS = [
+      { a: [0.034, 0.020, 0.012], f: [0.23, -0.17, 0.31], p: [0.0, 2.1, 4.2], s: 0.11, o: 0.0 },
+      { a: [0.028, 0.026, 0.010], f: [-0.19, 0.27, -0.23], p: [1.3, 0.4, 2.9], s: 0.09, o: 2.1 },
+      { a: [0.030, 0.016, 0.016], f: [0.15, 0.21, -0.29], p: [3.7, 5.0, 0.8], s: 0.13, o: 4.2 },
+    ];
+    const OFF = 100000;
+    // The orb is glow, from breathe-orbs.js (Levi 10-26). If that module cannot load, the disc below is drawn instead.
+    // Levi 10-26: the orb answers the pointer, a little. ptr is eased toward the pointer (±1 = the stage's half
+    // size) and back to the centre when it leaves; the loop does the easing.
+    const ptr = { x: 0, y: 0, h: 0, tx: 0, ty: 0, th: 0 };
+    function easePtr(dt) {
+      const k = approach(dt, 5);
+      ptr.x += (ptr.tx - ptr.x) * k; ptr.y += (ptr.ty - ptr.y) * k; ptr.h += (ptr.th - ptr.h) * k;
     }
+    let ORBS = {};
+    try { ({ ORBS } = await import("./breathe-orbs.js")); } catch (e) { console.warn("orbs", e); }
+    function drawDisc(v, time = 0, amp = 0) {
+      drawOrb(v, time, amp);
+    }
+    function drawOrb(v, time = 0, amp = 0) {
+      const O = ORBS.glow;
+      const rm = mqRM.matches;
+      if (O) { ctx.clearRect(0, 0, w, h); O.draw(ctx, { w, h, v, time, amp, dpr: DPR, ink: INK, rm, mx: rm ? 0 : ptr.x, my: rm ? 0 : ptr.y, hover: rm ? 0 : ptr.h }); return; }
+      ctx.clearRect(0, 0, w, h);
+      const r = Math.min(w, h) * 0.30 * (0.55 + 0.45 * v);
+      if (r <= 0) return;
+      const blur = Math.max(4, r * 0.07);
+      ctx.save();
+      ctx.fillStyle = "#000";
+      ctx.shadowColor = `rgba(${INK},${LA})`;
+      ctx.shadowBlur = blur * DPR;
+      ctx.shadowOffsetX = OFF * DPR;
+      for (const L of LAYERS) {
+        const lean = rm ? 0 : r * 0.04 * amp;
+        const cx = w / 2 + r * 0.07 * amp * Math.sin(time * L.s * 6.283 + L.o) + lean * ptr.x - OFF;
+        const cy = h / 2 + r * 0.055 * amp * Math.cos(time * L.s * 8.17 + L.o) + lean * ptr.y;
+        ctx.beginPath();
+        for (let k = 0; k <= 120; k++) {
+          const th = k / 120 * Math.PI * 2;
+          const m = 1 + 1.5 * amp * (L.a[0] * Math.sin(2 * th + L.p[0] + L.f[0] * time)
+                             + L.a[1] * Math.sin(3 * th + L.p[1] + L.f[1] * time)
+                             + L.a[2] * Math.sin(5 * th + L.p[2] + L.f[2] * time));
+          const rr = (r - blur * 0.5) * m;
+          const x = cx + rr * Math.cos(th), y = cy + rr * Math.sin(th);
+          if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    // Levi 10-26 round 7: progress lives in the tray, not round the orb. prog still feeds the finish.
+    const prog = { sf: 0, cf: 0, cycle: 0, n: 4, on: false, done: false };
+    const TAU = Math.PI * 2;
+    // Before begin, and after a run, the disc breathes on its own: an 8 second breath between a small and a
+    // middle size, slower than any exercise, so it reads as waiting rather than as a cue to follow.
+    const idleAt = time => 0.3 - 0.22 * Math.cos(time * Math.PI * 2 / 8);
 
     /* ---------- the two drivers ---------- */
 
@@ -599,6 +864,7 @@
       frames++;
       const dt = Math.min(0.05, (now - lastNow) / 1000 || 0.016);
       lastNow = now;
+      const time = now / 1000;
       if (running) {
         // Clamped at zero: a rAF timestamp is the time the frame STARTED, which
         // can precede the click that set the origin by a millisecond or two. A
@@ -609,17 +875,27 @@
         if (!loc) { settle(); }
         else {
           setPhase(loc);
-          setFill(loc.t / loc.p.seconds);
-          discCur = discAt(loc);
+          setFill(loc.t / loc.p.seconds, loc);
+          // The first 700ms ease from the idle breath into the exercise's own first phase.
+          const k = smooth(Math.min(1, (now - t0) / 700));
+          discCur = blendFrom + (discAt(loc) - blendFrom) * k;
         }
       } else {
-        // A run stopped by hand lets the disc come back down rather than
-        // dropping it.
-        discCur += (0 - discCur) * approach(dt, 6);
+        // At rest the disc settles back into the idle breath rather than dropping.
+        discCur += (idleAt(time) - discCur) * approach(dt, 3);
       }
-      drawDisc(discCur);
-      if (running || discCur > 0.002) raf = requestAnimationFrame(loop);
-      else { raf = 0; discCur = 0; drawDisc(0); }
+      easePtr(dt);
+      stepPress(dt);
+      drawDisc(Math.max(0, discCur + squish.s), time, 1);
+      drawBloom(now);
+      raf = requestAnimationFrame(loop);
+    }
+    let blendFrom = 0;
+    function idle() {
+      stopDrivers();
+      if (mqRM.matches) { drawDisc(discCur); return; }
+      lastNow = performance.now();
+      raf = requestAnimationFrame(loop);
     }
 
     // Reduced motion: no rAF at all, and no smooth clock. The phase label, a
@@ -632,8 +908,9 @@
       const loc = locate(el);
       if (!loc) { settle(); return; }
       setPhase(loc);
-      setFill(Math.min(1, Math.floor(loc.t + 1e-6) / loc.p.seconds));
+      setFill(Math.min(1, Math.floor(loc.t + 1e-6) / loc.p.seconds), loc);
       countEl.textContent = String(Math.max(1, Math.ceil(loc.p.seconds - loc.t - 1e-6)));
+      drawDisc(discCur);
       const next = Math.min(Math.floor(loc.t + 1e-6) + 1, loc.p.seconds);
       rmT = setTimeout(rmTick, Math.max(30, (next - loc.t) * 1000));
     }
@@ -646,9 +923,12 @@
       running = true; done = false;
       t0 = performance.now();
       lastNow = t0;
+      blendFrom = discCur;
       phaseIdx = -1; cycleIdx = 0;
       cycleMarks = []; phaseMarks = [];
       goEl.textContent = "end";
+      trayEl.classList.remove("is-done"); guideEl.classList.remove("is-done"); prog.done = false;
+      for (const b of cSegs) b.style.transform = "scaleX(0)";
       if (mqRM.matches) {
         countEl.hidden = false;
         rmTick();
@@ -656,6 +936,76 @@
         countEl.hidden = true;
         raf = requestAnimationFrame(loop);
       }
+    }
+    // At rest the line above the words reads "4 cycles" and the whole length. Finished, it reads "done" with a
+    // check that draws itself in.
+    // "1/4" and the time left in the session, under the bar.
+    const lastText = ["", "", ""];
+    function setText(cyc, left, sec) {
+      const vals = [cyc, left, sec];
+      ["m-cyc", "m-left", "m-sec"].forEach((c, i) => {
+        if (lastText[i] === vals[i]) return;
+        lastText[i] = vals[i];
+        for (const el of document.getElementsByClassName(c)) el.textContent = vals[i];
+      });
+    }
+    function restMeta(finished) {
+      trayEl.classList.toggle("is-done", !!finished);
+      guideEl.classList.toggle("is-done", !!finished);
+      prog.done = !!finished; prog.on = false;
+      setText(finished ? `${ex.cycles}/${ex.cycles}` : `${ex.cycles} cycles`, clock(finished ? 0 : totalSeconds(ex)), "");
+      cycleEl.innerHTML = finished
+        ? `<svg class="tick" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7.4l2.6 2.6L11 4.6"/></svg>done, ${ex.cycles} cycles`
+        : `${ex.cycles} cycles`;
+      leftEl.textContent = clock(totalSeconds(ex));
+      if (cSegs.length !== ex.cycles) {
+        cyclesEl.textContent = "";
+        cSegs = Array.from({ length: ex.cycles }, () => {
+          const i = document.createElement("i"), b = document.createElement("b");
+          i.append(b); cyclesEl.append(i);
+          return b;
+        });
+      }
+      for (const b of cSegs) b.style.transform = `scaleX(${finished ? 1 : 0})`;
+    }
+    // The finish: the disc sends out one soft ring that widens and fades, and the phase words light in turn.
+    // Levi 10-26: no circles on a tap. The orb gives a little and springs back, a spring on its size stepped in the loop.
+    const squish = { s: 0, vel: 0 };
+    function stepPress(dt) {
+      // stiff, about a third of a second, one small overshoot
+      const acc = -260 * squish.s - 16 * squish.vel;
+      squish.vel += acc * dt; squish.s += squish.vel * dt;
+      if (Math.abs(squish.s) < 1e-4 && Math.abs(squish.vel) < 1e-3) squish.s = squish.vel = 0;
+    }
+    let bloomAt = -1;
+    function celebrate() {
+      if (mqRM.matches) return;
+      bloomAt = performance.now();
+      cSegs.forEach((b, i) => b.parentNode.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(2.2)" }, { transform: "scaleY(1)" }],
+        { duration: 520, delay: 200 + i * 90, easing: "cubic-bezier(.34,1.56,.64,1)" }));
+      spans.forEach((sp, i) => sp.animate([{ color: "var(--accent)" }, { color: "var(--paper-muted)" }],
+        { duration: 700, delay: i * 90, easing: "ease-out" }));
+    }
+    function drawBloom(now) {
+      if (bloomAt < 0) return;
+      const k = (now - bloomAt) / 1600;
+      if (k >= 1) { bloomAt = -1; return; }
+      const e = 1 - Math.pow(1 - k, 3);
+      const r0 = Math.min(w, h) * 0.30 * (0.55 + 0.45 * discCur);
+      ctx.save();
+      ctx.shadowColor = `rgba(${INK},.35)`;
+      ctx.shadowBlur = 10 * DPR;
+      for (const [lag, a] of [[0, 0.22], [0.2, 0.1]]) {
+        const kk = Math.max(0, (k - lag) / (1 - lag));
+        if (!kk) continue;
+        const ee = 1 - Math.pow(1 - kk, 3);
+        ctx.beginPath();
+        ctx.arc(w / 2, h / 2, r0 * (1 + 0.55 * ee), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${INK},${a * (1 - kk)})`;
+        ctx.lineWidth = 1 + 3 * (1 - kk);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
     // Both the hand-stopped end and the finished end land here. The difference
     // is only what the button offers next.
@@ -665,16 +1015,15 @@
       done = !!finished;
       stopDrivers();
       for (const s of spans) s.classList.remove("is-now");
-      setFill(0);
+      setFill(0, null);
+      if (finished) celebrate();
       sayEl.textContent = finished ? "done" : "stopped";
       goEl.textContent = finished ? "again" : "begin";
-      cycleEl.textContent = finished
-        ? `${ex.cycles} cycles, done`
-        : `${ex.cycles} cycles, ${human(totalSeconds(ex))}`;
+      restMeta(finished);
       countEl.hidden = true;
       countEl.textContent = "";
-      if (mqRM.matches) { discCur = 0; drawDisc(0); }
-      else { lastNow = performance.now(); raf = requestAnimationFrame(loop); }
+      if (mqRM.matches) discCur = 0;
+      idle();
     }
     const settle = () => stop(true);
     function stopDrivers() {
@@ -703,7 +1052,7 @@
       cycleMarks = []; phaseMarks = [];
       setFill(0);
       goEl.textContent = "begin";
-      cycleEl.textContent = `${next.cycles} cycles, ${human(totalSeconds(next))}`;
+      restMeta(false);
       countEl.hidden = true; countEl.textContent = "";
       sayEl.textContent = "";
       onGuide = true;
@@ -712,7 +1061,7 @@
       // Nothing autoplays. The guide opens at rest with one word on it, and
       // focus goes to that word so a keyboard lands where a finger would.
       if (booted) goEl.focus();
-      requestAnimationFrame(() => { fitCanvas(); discCur = 0; drawDisc(0); });
+      requestAnimationFrame(() => { fitCanvas(); if (mqRM.matches) { discCur = 0; drawDisc(0); } else if (!raf) idle(); });
     }
     function toMenu() {
       stop(false);
@@ -727,15 +1076,26 @@
 
     press(goEl, () => { if (running) stop(false); else begin(); });
     backEl.addEventListener("click", toMenu);
-    // Tap again anywhere on the stage to stop. It only ever stops: starting is
-    // the one thing that has to be deliberate.
-    stageEl.addEventListener("pointerdown", () => { if (running) stop(false); });
+    // Levi 10-26: the orb answers a tap: it gives a little and springs back. A tap never ends the run; only "end" does.
+    stageEl.addEventListener("pointerdown", () => {
+      if (mqRM.matches) return;
+      squish.vel -= 1.4;
+    });
+    // The pointer anywhere on the page counts; the orb's pull is measured from the stage's centre.
+    window.addEventListener("pointermove", e => {
+      const r = stageEl.getBoundingClientRect();
+      const x = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+      const y = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+      ptr.tx = Math.max(-1, Math.min(1, x)); ptr.ty = Math.max(-1, Math.min(1, y));
+      ptr.th = Math.abs(x) < 1 && Math.abs(y) < 1 ? 1 : 0;
+    });
+    document.documentElement.addEventListener("pointerleave", () => { ptr.tx = ptr.ty = ptr.th = 0; });
 
     /* ---------- boot ---------- */
 
     function resize() {
       fitCanvas();
-      if (!running || mqRM.matches) drawDisc(discCur);
+      if (mqRM.matches) drawDisc(discCur);
     }
     window.addEventListener("resize", resize);
     // The stage changes size with no window resize: the web font rewraps the
@@ -743,7 +1103,7 @@
     new ResizeObserver(resize).observe(canvas);
 
     function setMode() {
-      if (!running) { stopDrivers(); drawDisc(discCur); return; }
+      if (!running) { if (mqRM.matches) discCur = 0; idle(); return; }
       // Switching the OS toggle mid-run keeps the run: the origin does not
       // move, only which driver is reading it.
       stopDrivers();
@@ -766,7 +1126,7 @@
     function pick(next) {
       if (running) stop(false);
       open(next);
-      for (const t of segEl.children) t.setAttribute("aria-selected", String(t.dataset.ex === next.slug));
+      for (const t of segEl.querySelectorAll("[role=tab]")) t.setAttribute("aria-selected", String(t.dataset.ex === next.slug));
       if (factsEl) {
         const { b, pill } = rowOf(next.slug);
         factsEl.innerHTML = "";
@@ -783,17 +1143,57 @@
         factsEl.append(top, p);
       }
     }
+    const STUDY = "https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/";
     for (const e of EXERCISES) {
+      const card = document.createElement("div");
+      card.className = "tab";
+      card.setAttribute("role", "none");
       const t = document.createElement("button");
       t.type = "button";
       t.setAttribute("role", "tab");
       t.dataset.ex = e.slug;
       t.textContent = e.name;
       t.addEventListener("click", () => pick(e));
-      segEl.append(t);
+      // Levi 10-26: the tag is a detail, not a link: a tap on it picks the exercise like the rest of the tab.
+      // The study is linked once, under begin.
+      const pillA = document.createElement("span");
+      pillA.className = "pill-link";
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      const glint = document.createElement("span");
+      glint.className = "glint";
+      glint.setAttribute("aria-hidden", "true");
+      const word = document.createElement("span");
+      word.className = "badge-word";
+      word.id = `pill-${e.slug}`;
+      word.textContent = e.pill.name;
+      const spark = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      spark.setAttribute("class", "spark");
+      spark.setAttribute("viewBox", "0 0 12 12");
+      spark.setAttribute("aria-hidden", "true");
+      spark.innerHTML = '<path d="M6 0C6.4 3.6 8.4 5.6 12 6 8.4 6.4 6.4 8.4 6 12 5.6 8.4 3.6 6.4 0 6 3.6 5.6 5.6 3.6 6 0Z" fill="currentColor"/>';
+      badge.append(glint, spark, word);
+      pillA.append(badge);
+      t.setAttribute("aria-describedby", word.id);
+      card.addEventListener("pointerenter", () => sweep(glint));
+      t.addEventListener("focus", () => sweep(glint));
+      card.append(t, pillA);
+      segEl.append(card);
     }
     pick(EXERCISES[0]);
     booted = true;
+
+    // The picker is centred (Levi 10-26 picked layout b).
+    document.documentElement.dataset.tag = "b";
+
+    // The tab pills take turns shining on their own, one every 2.4s, while the picker is in view.
+    let segTurn = 0, segSeen = false;
+    new IntersectionObserver(es => { segSeen = es[es.length - 1].isIntersecting; }).observe(segEl);
+    setInterval(() => {
+      if (!segSeen || document.hidden || running) return;
+      const gs = segEl.querySelectorAll(".glint");
+      if (gs.length) sweep(gs[segTurn++ % gs.length]);
+    }, 2400);
 
 
     // The probe surface, in the shape form.html already uses: enough to assert
