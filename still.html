@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>journey of meditation</title>
+  <meta name="description" content="a scroll through what meditation does: noise, one breath, attention, and the space between thoughts. a study by levi adissi.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0A0A'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23EDEDED'/%3E%3C/svg%3E">
+  <style>
+    @font-face{
+      font-family:"Aspekta";
+      font-weight:100 900;
+      font-style:normal;
+      font-display:swap;
+      src:url("https://cdn.jsdelivr.net/gh/ivodolenc/aspekta@cd08efde1a0484c3626818ac59a6933e59f71531/packages/fonts/variable/AspektaVF.woff2") format("woff2");
+    }
+
+    :root{
+      color-scheme:dark;
+
+      /* Night side. The page opens here and surfaces onto the same warm paper
+         the portrait mock lives on, so leaving feels like coming back up. */
+      --night:#0A0A0A;
+      --night-ink:#EDEDED;   /* 16.9:1 on --night */
+      --night-muted:#8F8F8F; /* 6.1:1 */
+      --night-line:#232323;
+
+      --paper:#F2EFE6;
+      --paper-ink:#171512;   /* 15.85:1 on --paper */
+      --paper-muted:#5F5C54; /* 5.8:1 */
+      --paper-line:#DFDACE;
+
+      --body:"Aspekta",ui-sans-serif,system-ui,sans-serif;
+
+      /* Three small, two large, nothing between 18 and 47. */
+      --t-hero:clamp(47px,9vw,76px);
+      --t-line:clamp(47px,7vw,56px);
+      --t-lede:18px;
+      --t-body:15px;
+      --t-small:13px;
+
+      --dur-ui:160ms;
+      --ease-ui:cubic-bezier(.4,0,.2,1);
+      --dur-scene:600ms;
+      --ease-scene:cubic-bezier(.19,1,.22,1);
+
+      --s1:8px;--s2:16px;--s3:24px;--s4:40px;--s5:64px;--s6:96px;
+      --col:min(640px,calc(100vw - 48px));
+    }
+
+    *{box-sizing:border-box}
+    html{background:var(--night)}
+    body{
+      margin:0;
+      /* JS drives this between night and paper; the static value is the no-JS page. */
+      background:var(--night);
+      color:var(--night-ink);
+      font:400 var(--t-body)/1.55 var(--body);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow-x:hidden;
+    }
+    p{margin:0}
+    a{color:inherit}
+    ::selection{background:var(--night-ink);color:var(--night)}
+    body.is-paper ::selection{background:var(--paper-ink);color:var(--paper)}
+
+    .mast{
+      position:fixed;inset:0 0 auto 0;z-index:3;
+      display:flex;justify-content:space-between;align-items:center;
+      padding:18px 24px;
+      font-size:var(--t-small);
+      color:var(--night-muted);
+      pointer-events:none;
+    }
+    body.is-paper .mast{color:var(--paper-muted)}
+
+    /* Each scene: a tall section with a sticky full-height stage inside it.
+       The extra height is the scrub room. */
+    .scene{position:relative}
+    .stage{
+      position:sticky;top:0;height:100svh;
+      display:grid;place-items:center;
+      overflow:hidden;
+    }
+    .stage canvas{
+      position:absolute;inset:0;width:100%;height:100%;
+      touch-action:pan-y; /* a finger on the art must still scroll the page */
+      display:block;
+    }
+    .copy{
+      position:relative;z-index:2;
+      width:var(--col);
+      pointer-events:none; /* touches fall through to the canvas */
+      text-align:center;
+    }
+    .copy a{pointer-events:auto}
+    h1,h2{margin:0;font-weight:600;letter-spacing:-.02em}
+    h1{font-size:var(--t-hero);line-height:1.04}
+    h2{font-size:var(--t-line);line-height:1.08}
+    .sub{
+      margin:var(--s3) auto 0;
+      font-size:var(--t-lede);line-height:1.5;
+      color:var(--night-muted);
+      max-width:34ch;
+    }
+    .on-paper .sub{color:var(--paper-muted)}
+    .on-paper{color:var(--paper-ink)}
+
+    /* Reveal: opacity + 8px rise, staggered by a custom property. */
+    .reveal{
+      opacity:0;transform:translateY(8px);
+      transition:opacity var(--dur-scene) var(--ease-scene) var(--rd,0ms),
+                 transform var(--dur-scene) var(--ease-scene) var(--rd,0ms);
+    }
+    .reveal.is-in{opacity:1;transform:none}
+
+    .hint{
+      position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+      font-size:var(--t-small);color:var(--night-muted);
+      animation:drift 2.4s var(--ease-scene) infinite;
+    }
+    @keyframes drift{
+      0%,100%{transform:translate(-50%,0)}
+      50%{transform:translate(-50%,6px)}
+    }
+
+    /* Breath: copy rides the top of the stage, the orb owns the middle,
+       the labels sit under it. Nothing overlaps the breathing body. */
+    #breath .copy,#steadier .copy,#between .copy{align-self:start;padding-top:12svh}
+    .phase{
+      position:absolute;bottom:12svh;left:0;right:0;z-index:2;
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+      font-size:var(--t-small);
+      color:var(--night-muted);
+      pointer-events:none;
+    }
+    .phase-words{display:flex;gap:var(--s4);justify-content:center}
+    .phase span{transition:color var(--dur-scene) var(--ease-scene)}
+    .phase span.is-now{color:var(--night-ink)}
+    /* One track under the words, filled over each four-second stage. */
+    .phase-track{width:132px;height:2px;background:var(--night-line)}
+    .phase-track i{
+      display:block;width:100%;height:100%;
+      background:var(--night-ink);
+      transform:scaleX(0);transform-origin:left;
+    }
+
+    /* Scene heights: the journey is ~13 screens long. */
+    #noise{height:190svh}
+    #breath{height:260svh}
+    #attention{height:220svh}
+    #steadier{height:210svh}
+    #between{height:210svh}
+    #surfacing{height:150svh}
+    #stillness{height:120svh}
+
+    /* Surfacing carries no copy. The ground does the talking. */
+    #surfacing .stage{align-items:center}
+
+    #stillness .stage{background:transparent}
+    .end-dot{
+      width:16px;height:16px;border-radius:50%;
+      background:var(--paper-ink);
+      margin:0 auto var(--s4);
+    }
+    .end-small{margin-top:var(--s4);font-size:var(--t-small);color:var(--paper-muted)}
+    .back{
+      display:inline-block;margin-top:var(--s3);
+      font-size:var(--t-body);color:var(--paper-ink);
+      text-decoration:underline;text-underline-offset:3px;
+      transition:opacity var(--dur-scene) var(--ease-scene) var(--rd,0ms),
+                 transform var(--dur-scene) var(--ease-scene) var(--rd,0ms),
+                 filter var(--dur-ui) var(--ease-ui);
+    }
+    .back:hover,.back:focus-visible{filter:opacity(.6)}
+    .back{position:relative}
+    .back::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+    /* form.html and breathe.html already declare this ring; still.html only dimmed
+       on focus, so its back link fell back to Chrome's default blue. Same 2px
+       --paper-ink ring as its siblings, and the link always sits on paper. */
+    .back:focus-visible{outline:2px solid var(--paper-ink);outline-offset:3px}
+    .thanks{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--s1) var(--s2);margin-top:var(--s3)}
+    .thanks-line{margin:0;font-size:var(--t-lede);line-height:1.5;color:var(--paper-muted)}
+    .pray{appearance:none;pointer-events:auto;display:inline-flex;align-items:center;gap:6px;height:44px;min-width:44px;padding:0 14px;border:1px solid var(--paper-line);border-radius:10px;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--paper-ink);cursor:pointer;transition:border-color var(--dur-ui) var(--ease-ui),opacity var(--dur-scene) var(--ease-scene) var(--rd,0ms),transform var(--dur-scene) var(--ease-scene) var(--rd,0ms)}
+    .pray:hover{border-color:var(--paper-ink)}
+    .pray:focus-visible{outline:2px solid var(--paper-ink);outline-offset:3px}
+    .pray-n{font-variant-numeric:tabular-nums}
+    .pray-mark{display:inline-block}
+    .pray-mark.is-pop{animation:pray-pop 240ms var(--ease-ui)}
+    @keyframes pray-pop{40%{transform:scale(1.25)}}
+    .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+    @media (prefers-reduced-motion:reduce){
+      .reveal{transition-duration:.01ms;transition-delay:0ms;transform:none}
+      .hint{animation:none}
+      .mast,.phase span,.back{transition-duration:.01ms}
+      .pray{transition-duration:.01ms;transition-delay:0ms}
+      .pray-mark.is-pop{animation:none}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="mast" aria-hidden="true">
+    <span>journey of meditation</span>
+    <span>levi adissi</span>
+  </header>
+
+  <main>
+    <section class="scene" id="noise" aria-label="the noise">
+      <div class="stage">
+        <canvas></canvas>
+        <div class="copy">
+          <h1 class="reveal">a cluttered mind.</h1>
+          <p class="sub reveal" style="--rd:60ms">what feels like endless thoughts. some pervasive.</p>
+        </div>
+        <p class="hint">scroll</p>
+      </div>
+    </section>
+
+    <section class="scene" id="breath" aria-label="one breath">
+      <div class="stage">
+        <canvas></canvas>
+        <div class="copy">
+          <h2 class="reveal">one breath.</h2>
+          <p class="sub reveal" style="--rd:60ms">in for 4s, hold for 4s, out for 4s.</p>
+        </div>
+        <div class="phase reveal" aria-hidden="true">
+          <div class="phase-words">
+            <span data-phase="in">in</span><span data-phase="hold">hold</span><span data-phase="out">out</span>
+          </div>
+          <div class="phase-track"><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="attention" aria-label="attention">
+      <div class="stage">
+        <canvas aria-label="scattered points gather into the line: intention is a muscle."></canvas>
+        <div class="copy" style="align-self:end;padding-bottom:12svh">
+          <p class="sub reveal">meditation is the gym. come back to the present, every return contributes to your practice.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="steadier" aria-label="steadier">
+      <div class="stage">
+        <canvas></canvas>
+        <div class="copy">
+          <h2 class="reveal">the droning settles.</h2>
+          <p class="sub reveal" style="--rd:60ms">a fit nervous system lowers stress faster. tap the line to lower reactivity.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="between" aria-label="the space between">
+      <div class="stage">
+        <canvas></canvas>
+        <div class="copy">
+          <h2 class="reveal">you are not your thoughts.</h2>
+          <p class="sub reveal" style="--rd:60ms">you are the one watching them. let them go and return to the present.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="surfacing" aria-hidden="true">
+      <div class="stage"></div>
+    </section>
+
+    <section class="scene on-paper" id="stillness" aria-label="stillness">
+      <div class="stage">
+        <div class="copy">
+          <div class="end-dot reveal" id="endDot"></div>
+          <h2 class="reveal" style="--rd:60ms">one breath at a time.</h2>
+          <div class="thanks">
+            <p class="thanks-line reveal" style="--rd:120ms">thank you for joining me on this journey.</p>
+            <button class="pray reveal" style="--rd:180ms" type="button" id="pray"><span class="pray-mark" aria-hidden="true">🙏</span><span class="pray-n" id="prayN">0</span></button>
+            <span class="vh" id="prayLive" aria-live="polite"></span>
+          </div>
+          <a class="back reveal" style="--rd:240ms" href="./">back to the site</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    "use strict";
+
+    /* ---------- shared ---------- */
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const mqRM = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const NIGHT_INK = "#EDEDED", NIGHT_MUTED = "#8F8F8F";
+    const PAPER_INK = "#171512";
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp01 = t => Math.min(1, Math.max(0, t));
+    // Deterministic hash noise, so a reload composes the same page.
+    const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+    function fitCanvas(canvas) {
+      const r = canvas.getBoundingClientRect();
+      const w = Math.round(r.width * DPR), h = Math.round(r.height * DPR);
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      return { w: r.width, h: r.height };
+    }
+
+    /* Ground: piecewise ramp from night to paper, positioned by the surfacing
+       section so copy always sits near one end of the ramp, never mid-mud. */
+    const STOPS = [
+      [0.00, [10, 10, 10]],
+      [0.45, [18, 16, 13]],
+      [0.70, [74, 66, 56]],
+      [0.85, [201, 193, 176]],
+      [1.00, [242, 239, 230]],
+    ];
+    function groundAt(t) {
+      for (let i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          const [t0, c0] = STOPS[i - 1], [t1, c1] = STOPS[i];
+          const k = (t - t0) / (t1 - t0);
+          return c0.map((v, j) => Math.round(lerp(v, c1[j], k)));
+        }
+      }
+      return STOPS[STOPS.length - 1][1];
+    }
+
+    const mast = document.querySelector(".mast");
+    const lumOf = c => { const [r, g, b] = c.map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const contrast = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    // Each side mixes its muted ink toward its pure extreme: night-muted toward white, paper-muted toward black.
+    const MAST_SIDES = [{ muted: [143, 143, 143], end: 255 }, { muted: [95, 92, 84], end: 0 }];
+    const mixInk = (s, k) => s.muted.map(v => Math.round(v + (s.end - v) * k));
+    // Ink over ground on the light side, ground over ink on the dark side, so it only rises with the mix.
+    const sideRatio = (s, c, ground) => { const a = lumOf(c) + 0.05, b = lumOf(ground) + 0.05; return s.end ? a / b : b / a; };
+    function mastInk(ground) {
+      let pick = null;
+      for (const s of MAST_SIDES) {
+        if (sideRatio(s, mixInk(s, 1), ground) < 4.8) continue;
+        let lo = 0, hi = sideRatio(s, s.muted, ground) >= 4.8 ? 0 : 1;
+        // The least mix that holds 4.8:1, to 1/4096 of the way.
+        while (hi - lo > 1 / 4096) { const k = (lo + hi) / 2; if (sideRatio(s, mixInk(s, k), ground) >= 4.8) hi = k; else lo = k; }
+        if (!pick || hi < pick.k) pick = { k: hi, c: mixInk(s, hi) };
+      }
+      const c = pick ? pick.c : MAST_SIDES.map(s => [s.end, s.end, s.end]).sort((a, b) => contrast(b, ground) - contrast(a, ground))[0];
+      return `rgb(${c[0]} ${c[1]} ${c[2]})`;
+    }
+
+    const surfacing = document.getElementById("surfacing");
+    let paper = false;
+    function updateGround() {
+      const r = surfacing.getBoundingClientRect();
+      // 0 before surfacing enters, 1 once its bottom clears the viewport top.
+      const total = r.height + window.innerHeight * 0.2;
+      const t = clamp01((window.innerHeight - r.top) / total);
+      const [cr, cg, cb] = groundAt(t);
+      document.body.style.background = `rgb(${cr} ${cg} ${cb})`;
+      mast.style.color = mastInk([cr, cg, cb]);
+      const nowPaper = t > 0.6;
+      if (nowPaper !== paper) { paper = nowPaper; document.body.classList.toggle("is-paper", paper); }
+    }
+
+    /* Reveals */
+    const io = new IntersectionObserver(es => {
+      for (const e of es) if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+    }, { threshold: 0.4 });
+    document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+    /* ---------- thanks counter ---------- */
+
+    // One small interface so the store can change without touching the button. This rough cut keeps the
+    // count on the device; a storage failure (private mode, quota) still counts for the visit.
+    const thanks = (() => {
+      const KEY = "still.thanks";
+      let mem = 0;
+      const read = () => {
+        try { const n = parseInt(localStorage.getItem(KEY) || "0", 10); return Number.isFinite(n) && n > 0 ? n : 0; }
+        catch { return 0; }
+      };
+      return {
+        get() { return Math.max(read(), mem); },
+        add() { mem = this.get() + 1; try { localStorage.setItem(KEY, String(mem)); } catch {} return mem; },
+      };
+    })();
+    const prayEl = document.getElementById("pray");
+    const prayN = document.getElementById("prayN");
+    const prayLive = document.getElementById("prayLive");
+    const prayMark = prayEl.querySelector(".pray-mark");
+    const showThanks = (n, announce) => {
+      prayN.textContent = String(n);
+      prayEl.setAttribute("aria-label", `say thanks, ${n} so far`);
+      if (announce) prayLive.textContent = `${n} thanks`;
+    };
+    showThanks(thanks.get(), false);
+    prayEl.addEventListener("click", () => {
+      showThanks(thanks.add(), true);
+      if (mqRM.matches) return;
+      prayMark.classList.remove("is-pop");
+      void prayMark.offsetWidth;
+      prayMark.classList.add("is-pop");
+    });
+
+    /* Scene runner: one rAF loop, scenes only draw while on screen.
+       Reduced motion is a mode, not a patch: loops never start, each scene
+       paints its settled end-state once, and the OS toggle re-renders live. */
+    const scenes = [];
+    class Scene {
+      constructor(id) {
+        this.el = document.getElementById(id);
+        this.canvas = this.el.querySelector("canvas");
+        this.ctx = this.canvas ? this.canvas.getContext("2d") : null;
+        this.visible = false;
+        this.w = 0; this.h = 0;
+        scenes.push(this);
+        if (this.el) {
+          new IntersectionObserver(es => {
+            this.visible = es[0].isIntersecting;
+            if (this.visible && mqRM.matches) this.renderStill();
+          }, { rootMargin: "20% 0px" }).observe(this.el);
+        }
+      }
+      progress() { // 0..1 through the section's scrub room
+        const r = this.el.getBoundingClientRect();
+        return clamp01(-r.top / Math.max(1, r.height - window.innerHeight));
+      }
+      resize() {
+        if (!this.canvas) return;
+        const s = fitCanvas(this.canvas);
+        this.w = s.w; this.h = s.h;
+        this.ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        this.onResize && this.onResize();
+        if (mqRM.matches) this.renderStill();
+      }
+      frame() {}      // animated path
+      renderStill() {} // settled end-state, drawn once
+    }
+
+    /* ---------- 1. noise ---------- */
+
+    const FRAGMENTS = ["later","did i send it","what if","i should","the thing tomorrow",
+      "reply","again","almost","not yet","the door","too late","next week",
+      "still there","why did i say that","one more","hm"];
+
+    class Noise extends Scene {
+      constructor() {
+        super("noise");
+        this.px = -1e4; this.py = -1e4;
+        const arm = e => { const r = this.canvas.getBoundingClientRect(); this.px = e.clientX - r.left; this.py = e.clientY - r.top; };
+        this.canvas.addEventListener("pointermove", arm);
+        this.canvas.addEventListener("pointerdown", arm); // a landing finger counts
+        this.canvas.addEventListener("pointerleave", () => { this.px = this.py = -1e4; });
+      }
+      onResize() {
+        this.items = FRAGMENTS.map((w, i) => ({
+          w,
+          x: (0.08 + 0.84 * hash(i * 2 + 1)) * this.w,
+          y: (0.08 + 0.84 * hash(i * 2 + 2)) * this.h,
+          s: 0.6 + hash(i * 3) * 0.9,          // drift speed
+          a: hash(i * 5) * Math.PI * 2,        // drift angle
+          o: 0.35 + hash(i * 7) * 0.45,        // opacity
+          ox: 0, oy: 0,                        // eased pointer offset
+        }));
+      }
+      draw(jitter, now) {
+        const c = this.ctx;
+        c.clearRect(0, 0, this.w, this.h);
+        c.font = `400 ${this.w < 500 ? 13 : 15}px Aspekta, sans-serif`;
+        for (const it of this.items) {
+          let x = it.x, y = it.y;
+          if (jitter) {
+            x += Math.sin(now * 0.0011 * it.s + it.a) * 26;
+            y += Math.cos(now * 0.0009 * it.s + it.a * 2) * 20;
+            // The pointer push is a target the word eases toward, so approach
+            // and release are both smooth instead of snapping per frame.
+            let rx = 0, ry = 0;
+            const dx = x - this.px, dy = y - this.py, d2 = dx * dx + dy * dy;
+            if (d2 < 150 * 150) { const d = Math.sqrt(d2) || 1, f = (150 - d) / 150 * 54; rx = dx / d * f; ry = dy / d * f; }
+            it.ox += (rx - it.ox) * 0.09; it.oy += (ry - it.oy) * 0.09;
+            x += it.ox; y += it.oy;
+          }
+          c.globalAlpha = it.o;
+          c.fillStyle = NIGHT_MUTED;
+          c.fillText(it.w, x, y);
+        }
+        c.globalAlpha = 1;
+      }
+      frame(now) { this.draw(true, now); }
+      renderStill() { this.draw(false, 0); }
+    }
+
+    /* ---------- 2. breath ---------- */
+
+    const PHASES = [["in", 4000], ["hold", 4000], ["out", 4000]];
+
+    class Breath extends Scene {
+      constructor() {
+        super("breath");
+        this.hold = 0; this.holdT = 0;
+        this.labels = this.el.querySelectorAll(".phase span");
+        this.fill = this.el.querySelector(".phase-track i");
+        this.canvas.addEventListener("pointerdown", () => { this.hold = 1; });
+        const off = () => { this.hold = 0; };
+        this.canvas.addEventListener("pointerup", off);
+        this.canvas.addEventListener("pointercancel", off);
+        this.canvas.addEventListener("pointerleave", off);
+      }
+      orb(r, glow) {
+        const c = this.ctx, cx = this.w / 2, cy = this.h * 0.56;
+        c.clearRect(0, 0, this.w, this.h);
+        // halo, then body, then core: three gradients, all warm greys
+        let g = c.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 2.6);
+        g.addColorStop(0, `rgba(232,226,210,${0.16 + glow * 0.10})`);
+        g.addColorStop(1, "rgba(232,226,210,0)");
+        c.fillStyle = g; c.fillRect(0, 0, this.w, this.h);
+        g = c.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.1, cx, cy, r);
+        g.addColorStop(0, `rgba(240,236,226,${0.92})`);
+        g.addColorStop(1, `rgba(214,208,194,${0.55 + glow * 0.2})`);
+        c.fillStyle = g;
+        c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fill();
+      }
+      setLabel(name) {
+        for (const s of this.labels) s.classList.toggle("is-now", s.dataset.phase === name);
+      }
+      frame(now) {
+        const cycle = 12000, t = now % cycle;
+        let phase = "in", k;
+        if (t < 4000) { phase = "in"; k = t / 4000; }
+        else if (t < 8000) { phase = "hold"; k = 1; }
+        else { phase = "out"; k = 1 - (t - 8000) / 4000; }
+        this.setLabel(phase);
+        // The track counts off the current stage's four seconds.
+        this.fill.style.transform = `scaleX(${(t % 4000) / 4000})`;
+        this.holdT = lerp(this.holdT, this.hold, 0.06);
+        const base = Math.min(this.w, this.h);
+        const ease = k < 0 ? 0 : k * k * (3 - 2 * k); // smoothstep on the ramp phases
+        const r = base * (0.11 + 0.075 * ease);
+        this.orb(r, this.holdT);
+      }
+      renderStill() {
+        // Settled: a mid-breath orb, all three labels level, the track at rest.
+        for (const s of this.labels) s.classList.remove("is-now");
+        this.fill.style.transform = "scaleX(0)";
+        this.orb(Math.min(this.w, this.h) * 0.148, 0);
+      }
+    }
+
+    /* ---------- 3. attention ---------- */
+
+    class Attention extends Scene {
+      constructor() {
+        super("attention");
+        this.pts = null;
+        this.px = -1e4; this.py = -1e4;
+        const arm = e => { const r = this.canvas.getBoundingClientRect(); this.px = e.clientX - r.left; this.py = e.clientY - r.top; };
+        this.canvas.addEventListener("pointermove", arm);
+        this.canvas.addEventListener("pointerdown", arm);
+        this.canvas.addEventListener("pointerleave", () => { this.px = this.py = -1e4; });
+        document.fonts.ready.then(() => { this.onResize(); if (mqRM.matches && this.visible) this.renderStill(); });
+      }
+      onResize() {
+        // Sample the target line into points. Step widens until the count is kind.
+        const line = "intention is a muscle.";
+        const off = document.createElement("canvas");
+        const c = off.getContext("2d");
+        let size = Math.min(64, this.w * 0.078);
+        c.font = `600 ${size}px Aspekta, sans-serif`;
+        const tw = c.measureText(line).width;
+        if (tw > this.w * 0.92) size *= (this.w * 0.92) / tw;
+        off.width = Math.ceil(this.w); off.height = Math.ceil(size * 1.6);
+        c.font = `600 ${size}px Aspekta, sans-serif`;
+        c.textBaseline = "middle";
+        c.fillStyle = "#fff";
+        c.fillText(line, (off.width - c.measureText(line).width) / 2, off.height / 2);
+        const img = c.getImageData(0, 0, off.width, off.height).data;
+        let step = 3, pts;
+        do {
+          pts = [];
+          for (let y = 0; y < off.height; y += step)
+            for (let x = 0; x < off.width; x += step)
+              if (img[(y * off.width + x) * 4 + 3] > 128) pts.push([x, y]);
+          step++;
+        } while (pts.length > 1900);
+        const oy = this.h / 2 - off.height / 2;
+        this.pts = pts.map(([x, y], i) => ({
+          tx: x, ty: y + oy,
+          sx: hash(i * 2 + 9) * this.w,
+          sy: hash(i * 2 + 10) * this.h,
+          d: hash(i * 3 + 4) * 0.25,      // per-point convergence delay
+          ox: 0, oy: 0,                    // pointer offset, decays
+        }));
+      }
+      draw(t, interactive) {
+        if (!this.pts) return;
+        const c = this.ctx;
+        c.clearRect(0, 0, this.w, this.h);
+        c.fillStyle = NIGHT_INK;
+        for (const p of this.pts) {
+          const k = clamp01((t - p.d) / (1 - p.d));
+          const e = k * k * (3 - 2 * k);
+          let x = lerp(p.sx, p.tx, e), y = lerp(p.sy, p.ty, e);
+          if (interactive) {
+            const dx = x - this.px, dy = y - this.py, d2 = dx * dx + dy * dy;
+            if (d2 < 80 * 80) { const d = Math.sqrt(d2) || 1, f = (80 - d) / 80 * 30; p.ox += dx / d * f * 0.2; p.oy += dy / d * f * 0.2; }
+            p.ox *= 0.86; p.oy *= 0.86;
+            x += p.ox; y += p.oy;
+          }
+          c.fillRect(x, y, 1.7, 1.7);
+        }
+      }
+      frame() { this.draw(this.progress(), true); }
+      renderStill() { this.draw(1, false); } // the line, formed
+    }
+
+    /* ---------- 4. steadier ---------- */
+
+    class Steadier extends Scene {
+      constructor() {
+        super("steadier");
+        this.impulses = [];
+        this.canvas.addEventListener("pointerdown", e => {
+          const r = this.canvas.getBoundingClientRect();
+          if (this.impulses.length > 6) this.impulses.shift();
+          this.impulses.push({ x: e.clientX - r.left, t: performance.now() });
+          if (mqRM.matches) {
+            // Discrete, not animated: one spiked frame, then back to the settled line.
+            this.wave(0, performance.now() + 140, this.impulses);
+            clearTimeout(this.rmT);
+            this.rmT = setTimeout(() => { if (mqRM.matches) this.renderStill(); }, 600);
+          }
+        });
+      }
+      wave(rough, now, impulses) {
+        const c = this.ctx, N = 220, mid = this.h * 0.62;
+        c.clearRect(0, 0, this.w, this.h);
+        c.strokeStyle = NIGHT_INK; c.lineWidth = 1.5;
+        c.beginPath();
+        for (let i = 0; i <= N; i++) {
+          const x = i / N * this.w;
+          // A tap spreads calm: roughness is smoothly suppressed in a widening
+          // ring around the touch, eased in over ~400ms so nothing snaps, and
+          // the ambient is let back in slowly as the calm fades.
+          let calm = 1;
+          for (const im of impulses) {
+            const dt = (now - im.t) / 1000;
+            if (dt < 0) continue;
+            const dx = x - im.x, s = 110 + dt * 240;
+            calm *= 1 - Math.min(1, dt * 2.5) * Math.exp(-dt * 0.4) * Math.exp(-dx * dx / (2 * s * s));
+          }
+          let y = Math.sin(i / N * Math.PI * 3 + now * 0.0007) * this.h * 0.05 * (0.35 + 0.65 * calm);
+          y += (Math.sin(i * 0.9 + now * 0.004) * 0.5 + Math.sin(i * 2.3 - now * 0.006) * 0.3
+              + (hash(i * 13.7) - 0.5)) * this.h * 0.10 * rough * calm;
+          i ? c.lineTo(x, mid + y) : c.moveTo(x, mid + y);
+        }
+        c.stroke();
+        // Acknowledge the touch: a faint ring that widens and fades.
+        for (const im of impulses) {
+          const dt = (now - im.t) / 1000;
+          if (dt < 0 || dt > 1.4) continue;
+          c.globalAlpha = 0.22 * (1 - dt / 1.4);
+          c.lineWidth = 1;
+          c.beginPath(); c.arc(im.x, mid, 24 + dt * 260, 0, Math.PI * 2); c.stroke();
+          c.globalAlpha = 1;
+        }
+        c.lineWidth = 1.5;
+      }
+      frame(now) {
+        const rough = 1 - this.progress() * 0.94;
+        this.wave(rough, now, this.impulses);
+      }
+      renderStill() { this.wave(0, 0, []); } // the settled line
+    }
+
+    /* ---------- 5. the space between ---------- */
+
+    const THOUGHTS = ["planning", "replaying", "rehearsing", "worrying", "comparing", "wanting"];
+
+    class Between extends Scene {
+      constructor() {
+        super("between");
+        this.canvas.addEventListener("pointerdown", e => {
+          const r = this.canvas.getBoundingClientRect();
+          const x = e.clientX - r.left, y = e.clientY - r.top;
+          for (const b of this.blobs) {
+            const dx = x - b.x, dy = y - this.yOf(b), rr = b.r * 1.15;
+            if (!b.gone && dx * dx + dy * dy < rr * rr) { b.gone = performance.now(); break; }
+          }
+          if (mqRM.matches) this.renderStill();
+        });
+      }
+      onResize() {
+        // Slotted, not random: six thoughts share the width, alternating between
+        // two bands, so no size ever clumps them into one another or the copy.
+        const n = THOUGHTS.length;
+        this.blobs = THOUGHTS.map((w, i) => ({
+          w,
+          x: ((i + 0.5) / n * 0.84 + 0.08 + (hash(i * 11 + 3) - 0.5) * 0.05) * this.w,
+          y0: ((i % 2 ? 0.74 : 0.55) + (hash(i * 11 + 5) - 0.5) * 0.05) * this.h,
+          r: Math.min(this.w, this.h) * (0.085 + hash(i * 7 + 1) * 0.03),
+          v: 8 + hash(i * 5 + 2) * 10,   // px of slow rise over the scene
+          ph: hash(i * 9) * Math.PI * 2,
+          gone: 0,
+        }));
+      }
+      yOf(b) { return b.y0 - this.progress() * b.v * 3; }
+      draw(now, drift) {
+        const c = this.ctx;
+        c.clearRect(0, 0, this.w, this.h);
+        c.font = `400 13px Aspekta, sans-serif`;
+        c.textAlign = "center";
+        for (const b of this.blobs) {
+          let fade = 1;
+          if (b.gone) {
+            fade = 1 - Math.min(1, (now - b.gone) / (mqRM.matches ? 1 : 600));
+            if (fade <= 0) continue;
+          }
+          const x = b.x + (drift ? Math.sin(now * 0.0006 + b.ph) * 9 : 0);
+          const y = this.yOf(b) + (drift ? Math.cos(now * 0.0005 + b.ph * 2) * 7 : 0);
+          const g = c.createRadialGradient(x, y, b.r * 0.15, x, y, b.r);
+          g.addColorStop(0, `rgba(230,225,212,${0.14 * fade})`);
+          g.addColorStop(1, "rgba(230,225,212,0)");
+          c.fillStyle = g;
+          c.beginPath(); c.arc(x, y, b.r, 0, Math.PI * 2); c.fill();
+          c.globalAlpha = 0.75 * fade;
+          c.fillStyle = NIGHT_MUTED;
+          c.fillText(b.w, x, y + 4);
+          c.globalAlpha = 1;
+        }
+        c.textAlign = "start";
+      }
+      frame(now) { this.draw(now, true); }
+      renderStill() { this.draw(performance.now(), false); }
+    }
+
+    /* ---------- 6. stillness ---------- */
+
+    class Stillness extends Scene {
+      constructor() {
+        super("stillness");
+        this.dot = document.getElementById("endDot");
+      }
+      frame(now) {
+        // One small thing still breathes. Everything else has stopped.
+        const k = (Math.sin(now / 12000 * Math.PI * 2) + 1) / 2;
+        this.dot.style.transform = `scale(${0.85 + k * 0.5})`;
+      }
+      renderStill() { this.dot.style.transform = "none"; }
+    }
+
+    /* ---------- boot ---------- */
+
+    const all = [new Noise(), new Breath(), new Attention(), new Steadier(), new Between(), new Stillness()];
+
+    function resizeAll() { for (const s of all) s.resize(); updateGround(); }
+    window.addEventListener("resize", resizeAll);
+    resizeAll();
+
+    let raf = 0;
+    function loop(now) {
+      updateGround();
+      for (const s of all) if (s.visible) s.frame(now);
+      raf = requestAnimationFrame(loop);
+    }
+    function setMode() {
+      cancelAnimationFrame(raf);
+      if (mqRM.matches) {
+        for (const s of all) s.renderStill();
+        updateGround();
+        // The ground still follows the scroll: user-driven, not autonomous.
+        window.addEventListener("scroll", updateGround, { passive: true });
+      } else {
+        window.removeEventListener("scroll", updateGround);
+        raf = requestAnimationFrame(loop);
+      }
+    }
+    mqRM.addEventListener("change", setMode);
+    setMode();
+  </script>
+</body>
+</html>

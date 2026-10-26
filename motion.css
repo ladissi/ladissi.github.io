@@ -1,0 +1,70 @@
+/* Motion mock layer. Kit tokens only; the canvases paint over each card's screenshot, which stays
+   underneath as the still frame. */
+.has-motion { position: relative; isolation: isolate; }
+.motion-layer {
+  position: absolute; z-index: 1; pointer-events: none;
+  border-radius: var(--radius-xl, 0.75rem) var(--radius-xl, 0.75rem) 0 0;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.motion-layer.is-live { opacity: 1; }
+.motion-olmec {
+  position: absolute; z-index: 1;
+  opacity: 0; transition: opacity 0.5s ease;
+  cursor: grab;
+}
+.motion-olmec.is-live { opacity: 1; }
+.motion-olmec canvas { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+.motion-olmec:active { cursor: grabbing; }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-layer, .motion-olmec { transition: none; }
+  .motion-layer { opacity: 0; }
+}
+
+/* Work cards: real frames stacked on the card's own plate. */
+.motion-loop {
+  position: absolute; z-index: 1; overflow: hidden; pointer-events: none;
+  background: var(--muted);
+  opacity: 0;
+}
+.motion-loop.is-live { opacity: 1; }
+.motion-loop img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  box-sizing: border-box; display: block;
+  object-fit: contain; padding: 24px 0;
+  opacity: 0; will-change: opacity, transform;
+}
+.motion-loop img:first-child { opacity: 1; }
+/* A recording fills the whole picture, on its own ground in both themes; it carries its own margins. */
+.motion-video { background: var(--background); transition: opacity 0.4s ease; }
+.motion-video video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+/* The still scene: in both themes its frame runs edge to edge on its own ground, like the 3D and breathing pictures. */
+.motion-scene { background: var(--scene-ground); transition: opacity 0.4s ease; }
+.motion-window { position: absolute; inset: 0; overflow: hidden; }
+.motion-window canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Ambient: a soft, blurred copy of the live frame on the plate behind the device. Phone Zero's sits on a plate of
+   its own under the picture, whose plate goes clear while it shows; Nano Learner's sits on the recording's ground. */
+.motion-ambient {
+  position: absolute; z-index: -1; overflow: hidden; pointer-events: none; display: none;
+  background: var(--muted);
+  --ambient-shade: color-mix(in oklab, var(--foreground) 30%, transparent);
+}
+.dark .motion-ambient { --ambient-shade: color-mix(in oklab, var(--background) 90%, transparent); }
+.has-ambient > .motion-ambient { display: block; }
+/* Outranks the kit's a[data-slot=card]>img:is(.phone,.screen) plate. */
+a[data-slot=card].has-ambient > img:is(.phone, .screen) { background: transparent; }
+.motion-glow { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; }
+.motion-glow.is-live { opacity: 1; }
+.motion-glow canvas { position: absolute; display: block; }
+/* A contact shadow: tight under the phone, and a wider, softer one a little below it. */
+.motion-contact {
+  position: absolute; pointer-events: none;
+  box-shadow: 0 1px 3px var(--ambient-shade), 0 10px 22px -8px var(--ambient-shade);
+}
+/* Under reduced motion the card's own screenshot is the still frame. Two classes, so it outranks .is-live. */
+@media (prefers-reduced-motion: reduce) {
+  .motion-loop, .motion-loop.is-live, .motion-layer.is-live { opacity: 0; }
+  .motion-video, .motion-scene { transition: none; }
+  .has-ambient > .motion-ambient, .motion-glow, .motion-glow.is-live { display: none; }
+  a[data-slot=card].has-ambient > img:is(.phone, .screen) { background: var(--muted); }
+}

@@ -1,167 +1,203 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Personal Site</title>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HKB2GM7D7R"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-HKB2GM7D7R');
-    </script>
-    <style>
-      /* Base font size for all devices */
-      body {
-        font-size: 18px; /* Base font size */
-        line-height: 1.6; /* Improve readability with appropriate line height */
-        padding: 20px;
-        margin: 0;
-        font-family: Inter, sans-serif;
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Levi Adissi, product manager in Los Angeles.">
+  <title>Levi Adissi</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230D1117'/%3E%3Ccircle cx='16' cy='16' r='9' fill='%23E6EAF2'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/InterVariable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+    // Dark is the default and is written into the markup. Light is opt-in, stored by the
+    // toggle, and never inferred from the OS.
+    try {
+      if (localStorage.getItem("theme") === "light") {
+        document.documentElement.classList.remove("dark");
       }
-
-      /* Increase font size on larger screens */
-      @media (min-width: 600px) {
-        body {
-          font-size: 20px;
-        }
-      }
-
-      @media (min-width: 768px) {
-        body {
-          font-size: 22px;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        body {
-          font-size: 24px;
-        }
-      }
-
-      #emoji-link {
-        text-decoration: none;
-        color: inherit;
-        transition: color 0.3s ease;
-      }
-
-      #emoji-link:hover {
-        cursor: pointer;
-        color: #3c9600; /* Change the color on hover */
-      }
-
-      h1 {
-        font-size: 1.5em; /* Adjust the size of the header */
-        margin-bottom: 20px;
-      }
-
-      p, ul, li {
-        margin-bottom: 15px; /* Add space between paragraphs and list items */
-      }
-
-      ul {
-        padding-left: 20px; /* Add padding to the left of list items */
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>
-        <a id="emoji-link" href="https://example.com" target="_blank">
-          🦧 Levi Adissi
-        </a>
-      </h1>
-      <section>
-        <p id="greeting">Hey! 👋 Thanks for stopping by. This is my personal website.</p>
-        <h3>🔨 Projects:</h3>
-        <ul>
-          <li><a href="https://www.mmtm.app">Momentum</a> - a productivity web app with emphasis on goal organization and tracking</li>
-          <li><a href="https://onwordle.netlify.app">On Wordle</a> - a tool for players of Wordle</li>
-          <li>TCAI (in progress)</li>
-        </ul>
-        <h3>💭 Interests:</h3>
-        <ul>
-          <li>building products</li>
-          <li>LLM's</li>
-          <li>music production</li>
-        </ul>
-        <h3>➕ You can get in touch with me here:</h3>
-        <ul>
-          <li><a href="https://twitter.com/LeviAdissi">Twitter</a></li>
-          <li><a href="https://www.linkedin.com/in/levi-adissi">LinkedIn</a></li>
-        </ul>
-      </section>
-    </main>
-    <footer>
-      <p>No Copyright</p>
+    } catch (e) {}
+  </script>
+  <!-- The kit's own CSS (REPOS/shadcn-demo index.css + theme.css at dff09aa) and this page's layout, compiled by
+       tools/build_css.mjs into kit.css. -->
+  <link rel="stylesheet" href="kit.css">
+  <link rel="stylesheet" href="motion.css">
+  <link rel="stylesheet" href="home.css">
+  <script type="importmap">
+    {"imports":{"three":"https://esm.sh/three@0.170.0","three/addons/":"https://esm.sh/three@0.170.0/examples/jsm/"}}
+  </script>
+  <script type="module" src="motion.js"></script>
+</head>
+<body class="layout-a">
+  <main>
+    <div class="rail">
+    <header class="intro">
+      <div class="intro-name">
+        <span data-slot="avatar" data-size="default" class="group/avatar relative flex size-14 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken dark:after:mix-blend-lighten"><img data-slot="avatar-image" class="aspect-square size-full rounded-full object-cover" src="img/levi-photo-168.webp" alt="Levi Adissi" width="56" height="56"></span>
+        <h1 class="type-page-title">Levi Adissi</h1>
+      </div>
+      <p class="type-body">I'm a product manager in Los Angeles. I have seven years of experience, mostly enterprise B2B. Data platforms, API and pipeline strategy.</p>
+    </header>
+      <nav class="rail-nav" aria-label="sections">
+        <a href="#work">selected work</a>
+        <a href="#explorations">explorations</a>
+        <a href="#worked-with">worked with</a>
+        <a href="#awards">awards</a>
+        <a href="#about">about</a>
+      </nav>
+    <footer class="contact">
+      <button data-slot="button" class="mode group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5" type="button" hidden>
+        <svg data-icon="inline-start" class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg data-icon="inline-start" class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <span class="mode-label">light mode</span>
+      </button>
     </footer>
+    </div>
+    <div class="rail-body">
+    <section class="section" aria-labelledby="work">
+      <h2 id="work" class="type-section-title">selected work</h2>
+      <div class="cards cards-2">
+<div class="work-item">
+      <a data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl" href="https://apps.apple.com/us/app/phonezero/id6788562421">
+        <img class="phone" src="img/phonezero-480.webp" width="1120" height="700" alt="Phone Zero" decoding="async">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" id="t-pz" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">Phone Zero</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">minimalist iPhone app · on the App Store</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10M7 17 17 7"/></svg></div>
+        </div>
+      </a>
+      </div>
+<div class="work-item">
+      <a data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl" href="https://nanolearner.com">
+        <img src="img/nanolearner-promo-1120.webp" width="1120" height="700" alt="Nano Learner" decoding="async">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" id="t-nl" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">Nano Learner</div>
+          <div data-slot="card-description" class="text-sm text-muted-foreground">solo-founded learning app · built on the Claude API with Claude Code</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10M7 17 17 7"/></svg></div>
+        </div>
+      </a>
+      </div>
+      </div>
+    </section>
 
-    <script>
-      const animalEmojis = {
-        "🐵": "swinging by",
-        "🐒": "monkeying around",
-        "🦍": "gorilla-ing through",
-        "🦧": "hanging out",
-        "🐶": "wagging by",
-        "🐕": "barking by",
-        "🦮": "guiding by",
-        "🐩": "prancing by",
-        "🐺": "howling by",
-        "🦊": "sneaking by",
-        "🦝": "raccooning by",
-        "🐱": "meowing by",
-        "🐈": "purring by",
-        "🦁": "roaring by",
-        "🐯": "prowling by",
-        "🐅": "stalking by",
-        "🐆": "leaping by",
-        "🐴": "trotting by",
-        "🦄": "galloping by",
-        "🦓": "zebra-ing by",
-        "🐘": "stomping by",
-        "🦏": "charging by",
-        "🐢": "slowly walking by",
-        "🐇": "hopping by",
-        "🐿️": "scurrying by",
-        "🦔": "rolling by",
-        "🐸": "hopping by",
-        "🐍": "slithering by",
-        "🐉": "flying by",
-        "🦕": "lumbering by",
-        "🦖": "stomping by",
-        "🐙": "swimming by",
-        "🦈": "sharking by",
-        "🐋": "whale-ing by",
-        "🐟": "swimming by",
-        "🐠": "floating by",
-        "🐡": "puffing by",
-        "🦋": "fluttering by",
-        "🐝": "buzzing by",
-        "🪲": "crawling by",
-        "🦗": "hopping by",
-        "🪰": "flying by",
-        "🦨": "skunking by",
-        "🦫": "beavering by",
-        "🦘": "jumping by",
-        "🦥": "slowly moving by",
-        "🐨": "koala-ing by",
-        "🐼": "panda-ing by",
-        "🦩": "flamingo-ing by"
-      };
+    <section class="section" aria-labelledby="explorations">
+      <h2 id="explorations" class="type-section-title">explorations</h2>
+      <div class="cards cards-3">
+<a data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl" href="still.html">
+        <img src="img/still-560.webp" srcset="img/still-560.webp 560w, img/still-1120.webp 1120w" sizes="(min-width: 1120px) 341px, (min-width: 640px) calc((100vw - 112px) / 3), calc(100vw - 32px)" width="1120" height="700" alt="journey of meditation" decoding="async" loading="lazy">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">journey of meditation</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><svg class="chev size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></div>
+        </div>
+      </a>
+<a data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl" href="form.html">
+        <img src="img/form-560.webp" srcset="img/form-560.webp 560w, img/form-1120.webp 1120w" sizes="(min-width: 1120px) 341px, (min-width: 640px) calc((100vw - 112px) / 3), calc(100vw - 32px)" width="1120" height="700" alt="exploration of 3D objects" decoding="async" loading="lazy">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">exploration of 3D objects</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><svg class="chev size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></div>
+        </div>
+      </a>
+<a data-slot="card" data-size="default" class="group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl" href="breathe.html">
+        <img src="img/breathe-560.webp" srcset="img/breathe-560.webp 560w, img/breathe-1120.webp 1120w" sizes="(min-width: 1120px) 341px, (min-width: 640px) calc((100vw - 112px) / 3), calc(100vw - 32px)" width="1120" height="700" alt="breathing exercises" decoding="async" loading="lazy">
+        <div data-slot="card-header" class="group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)">
+          <div data-slot="card-title" class="font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm">breathing exercises</div>
+          <div data-slot="card-action" class="col-start-2 row-span-2 row-start-1 self-start justify-self-end"><svg class="chev size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></div>
+        </div>
+      </a>
+      </div>
+    </section>
 
-      const emojiElement = document.getElementById('emoji-link');
-      const greetingElement = document.getElementById('greeting');
+    <section class="section" aria-labelledby="worked-with">
+      <h2 id="worked-with" class="type-section-title">worked with</h2>
+      <ul class="logos">
+          <li><span class="logo" role="img" aria-label="Kohler" style="--logo:url(img/logos/kohler.svg);width:107.9px;height:22.2px"></span></li>
+          <li><span class="logo" role="img" aria-label="Amgen" style="--logo:url(img/logos/amgen.svg);width:97.0px;height:24.7px"></span></li>
+          <li><span class="logo" role="img" aria-label="Ristich" style="--logo:url(img/logos/ristich.svg);width:100.3px;height:23.9px"></span></li>
+          <li><span class="logo" role="img" aria-label="Cal Poly" style="--logo:url(img/logos/calpoly.svg);width:96.5px;height:24.9px"></span></li>
+          <li><span class="logo" role="img" aria-label="Hack for LA" style="--logo:url(img/logos/hackforla.svg);width:30px;height:30px"></span></li>
+        </ul>
+    </section>
 
-      emojiElement.addEventListener('click', function(event) {
-        event.preventDefault(); // Prevent the default link behavior
-        const emojis = Object.keys(animalEmojis);
-        const randomIndex = Math.floor(Math.random() * emojis.length);
-        const selectedEmoji = emojis[randomIndex];
-        const verb = animalEmojis[selectedEmoji];
+    <section class="section testimonial" aria-labelledby="testimonial">
+      <h2 id="testimonial" class="type-section-title">testimonial</h2>
+      <figure class="quote">
+          <svg class="quote-mark" viewBox="0 0 32 24" aria-hidden="true"><path fill="currentColor" d="M0 24V14.4C0 6.6 4.3 1.8 12 0l1.6 3.4C9.4 4.8 7.3 7.4 7 11h6v13H0Zm18 0V14.4C18 6.6 22.3 1.8 30 0l1.6 3.4c-4.2 1.4-6.3 4-6.6 7.6h6v13H18Z"/></svg>
+          <blockquote><p class="type-body">Strong judgment, calm execution, and crisp communication. I'd gladly work with him again.</p></blockquote>
+          <figcaption><span class="who">Tad Schmitz</span><span>, my manager at Kohler</span></figcaption>
+        </figure>
+    </section>
 
-        emojiElement.textContent = selectedEmoji + " Levi Adissi";
-        greetingElement.innerHTML = `Hey! 👋 Thanks for ${verb}. This is my personal website.`;
+    <section class="section" aria-labelledby="awards">
+      <h2 id="awards" class="type-section-title">awards</h2>
+      <ul class="awards">
+        <li><span class="award-mark"><span role="img" aria-label="NIST" style="--logo:url(img/logos/nist.svg);width:64.1px;height:17.2px"></span></span><span>1st place and seed funding, NIST Tech to Protect national competition</span></li>
+        <li><span class="award-mark"><span role="img" aria-label="NIST" style="--logo:url(img/logos/nist.svg);width:64.1px;height:17.2px"></span></span><span>Regional award, NIST Tech to Protect competition</span></li>
+        <li><span class="award-mark"><span role="img" aria-label="Techstars" style="--logo:url(img/logos/techstars.svg);width:72px;height:12.5px"></span></span><span>1st place, Techstars Startup Weekend San Luis Obispo</span></li>
+        <li><span class="award-mark"><span role="img" aria-label="Capitol Records" style="--logo:url(img/logos/capitolrecords.svg);width:57.4px;height:19.2px"></span></span><span>Winner, Capitol Records Hackathon, an AR prototype for Bose</span></li>
+        <li><span class="award-mark"><span role="img" aria-label="Amgen" style="--logo:url(img/logos/amgen.svg);width:65.7px;height:16.8px"></span></span><span>Winner, Amgen Enterprise Chatbot Challenge</span></li>
+        <li><span class="award-mark"><span role="img" aria-label="Y Combinator" style="--logo:url(img/logos/ycombinator.svg);width:20px;height:20px"></span></span><span>Accepted to the invite-only YC Agents Hackathon at Y Combinator</span></li>
+      </ul>
+    </section>
+
+    <section class="section about" aria-labelledby="about">
+      <h2 id="about" class="type-section-title">about</h2>
+      <div class="about-body">
+      <img class="about-photo" src="img/about-b-320.webp" width="160" height="160" alt="Levi Adissi" decoding="async" loading="lazy">
+      <div class="about-text">
+      <p class="type-body">Most recently at Kohler, kicking off product in a new venture of theirs. Before that, four years at Amgen in commercial operations. Earlier I co-founded <a href="https://www.nist.gov/ctl/pscr/tech-protect-challenge-winners">AREA Technologies</a> AR start-up. I also won the Capitol Records Hackathon with an AR prototype for Bose.</p>
+      <p class="type-body">I've written code for my apps before. JavaScript, TypeScript and React, Python, SQL, AWS, REST APIs, MuleSoft, Salesforce. Lately I almost entirely build with AI.</p>
+      <p class="type-body">Other things I've built: an <a href="https://apps.apple.com/us/app/phonezero/id6788562421">iOS minimalist launcher</a> and an <a href="https://nanolearner.com/">AI learning app</a>.</p>
+      <p class="type-body">B.S. Information Systems, Cal Poly SLO.</p>
+      </div>
+      </div>
+    </section>
+    </div>
+</main>
+
+  <script>
+    (function () {
+      function decode(codes) {
+        return codes.map(function (c) { return String.fromCharCode(c - 7); }).reverse().join("");
+      }
+      var address = decode([116, 118, 106, 53, 115, 112, 104, 116, 110, 71, 112, 122, 122, 112, 107, 104, 112, 125, 108, 115]);
+      var scheme = decode([65, 118, 123, 115, 112, 104, 116]);
+
+      var link = document.createElement("a");
+      link.className = "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2";
+      link.setAttribute("data-slot", "button");
+      link.href = scheme + address;
+      link.innerHTML = '<svg data-icon="inline-start" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>';
+      link.appendChild(document.createTextNode(address));
+      document.querySelector(".contact").prepend(link);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var button = document.querySelector(".mode");
+      var label = button.querySelector(".mode-label");
+      var sun = button.querySelector(".icon-sun");
+      var moon = button.querySelector(".icon-moon");
+
+      function render() {
+        var dark = root.classList.contains("dark");
+        label.textContent = dark ? "light mode" : "dark mode";
+        sun.style.display = dark ? "" : "none";
+        moon.style.display = dark ? "none" : "";
+      }
+
+      button.addEventListener("click", function () {
+        var dark = root.classList.toggle("dark");
+        try {
+          localStorage.setItem("theme", dark ? "dark" : "light");
+        } catch (e) {}
+        render();
       });
-    </script>
-  </body>
+
+      button.hidden = false;
+      render();
+    })();
+  </script>
+
+  <script src="rail.js"></script>
+</body>
 </html>

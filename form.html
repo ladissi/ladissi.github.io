@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>exploration of 3D objects</title>
+  <meta name="description" content="three objects in one screen: turn them, throw them, light them with your pointer, and see each one as particles, bones, skin or ink. a study in the display and engagement of 3D objects by levi adissi.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F2EFE6'/%3E%3Cpolygon points='16,7 24,12 23,21 15,25 8,19 9,11' fill='%23171512'/%3E%3C/svg%3E">
+  <script type="importmap">
+    {"imports":{"three":"https://esm.sh/three@0.170.0","three/addons/":"https://esm.sh/three@0.170.0/examples/jsm/"}}
+  </script>
+  <style>
+    @font-face{
+      font-family:"Aspekta";
+      font-weight:100 900;
+      font-style:normal;
+      font-display:swap;
+      src:url("https://cdn.jsdelivr.net/gh/ivodolenc/aspekta@cd08efde1a0484c3626818ac59a6933e59f71531/packages/fonts/variable/AspektaVF.woff2") format("woff2");
+    }
+
+    :root{
+      color-scheme:light;
+
+      /* The playground has no journey, so it has no ground ramp: it is the room
+         still.html surfaces into, held permanently. Only the paper half of the
+         sibling token set survives, because `ink` has to read against the ground
+         and ink on night is invisible. */
+      --paper:#F2EFE6;
+      --paper-ink:#171512;   /* 15.85:1 on --paper */
+      --paper-muted:#5F5C54; /* 5.81:1 on --paper, 6.18:1 on --surface */
+      --surface:#F8F6F1;     /* the card, one step up from the paper */
+      --line:#DFDACE;
+      --input:#8A857B;       /* control edge, 3.4:1 on --surface */
+      --accent:#171512;      /* the page ink, 16.87:1 on --surface */
+      --accent-tint:#E4DFD2; /* ink on it 13.7:1, muted 5.02:1 */
+      --radius:8px;
+      --shadow-card:0 0 0 1px var(--line),0 1px 2px color-mix(in srgb,var(--paper-ink) 6%,transparent),0 2px 8px -2px color-mix(in srgb,var(--paper-ink) 8%,transparent);
+
+      --body:"Aspekta",ui-sans-serif,system-ui,sans-serif;
+
+      /* No display type on this page: the object is the headline. The three
+         small sizes are still still.html's, so the pages set the same. */
+      --t-lede:18px;
+      --t-body:15px;
+      --t-small:13px;
+
+      --dur-ui:160ms;
+      --ease-ui:cubic-bezier(.4,0,.2,1);
+      --dur-scene:600ms;
+      --ease-scene:cubic-bezier(.19,1,.22,1);
+
+      --s1:8px;--s2:16px;--s3:24px;--s4:40px;--s5:64px;--s6:96px;
+      --col:min(640px,calc(100vw - 48px));
+    }
+
+    *{box-sizing:border-box}
+    html{background:var(--paper)}
+    body{
+      margin:0;
+      height:100dvh; /* dvh, not vh: ios safari's toolbar owns the difference */
+      background:var(--paper);
+      color:var(--paper-ink);
+      font:400 var(--t-body)/1.55 var(--body);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow:hidden;
+      overscroll-behavior:none;
+    }
+    p{margin:0}
+    a{color:inherit}
+    ::selection{background:var(--paper-ink);color:var(--paper)}
+
+    /* One viewport, no page scroll, so the canvas can own every gesture. The
+       old pan-y compromise died with the scroll story. */
+    #gl{
+      position:fixed;inset:0;z-index:0;
+      width:100%;height:100%;
+      display:block;
+      touch-action:none;
+    }
+
+    /* ---- kit roles ---- */
+    h1,h2{margin:0}
+    .type-page-title{font-size:32px;line-height:40px;font-weight:400;letter-spacing:-.01em;color:var(--paper-ink)}
+    .type-section-title{font-size:16px;line-height:24px;font-weight:600;color:var(--paper-ink)}
+    .type-meta{font-size:13px;line-height:18px;color:var(--paper-muted)}
+    @media (max-width:639px){.type-page-title{font-size:20px;line-height:28px;font-weight:600;letter-spacing:0}}
+
+    .mast{
+      position:fixed;inset:0 0 auto 0;z-index:3;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:24px;
+      padding:24px 32px 0;
+      pointer-events:none;
+    }
+    @media (max-width:639px){.mast{padding:16px 16px 0}}
+    .mast-me{flex:none;padding-top:10px;font-size:13px;line-height:18px;color:var(--paper-muted)}
+    @media (max-width:639px){.mast-me{padding-top:5px}}
+
+    .card{
+      background:var(--surface);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-card);
+    }
+
+    /* Carbon content switcher: one edge, the segments inside it, the current one
+       in the accent tint. 36 tall, every segment a 44px target. */
+    .seg{
+      display:inline-flex;align-items:stretch;
+      padding:2px;gap:2px;
+      border:1px solid var(--input);border-radius:var(--radius);
+      background:var(--surface);
+    }
+    .seg button{
+      appearance:none;border:0;margin:0;
+      height:30px;padding:0 12px;
+      border-radius:6px;
+      background:none;
+      font:inherit;font-size:14px;line-height:20px;font-weight:400;
+      color:var(--paper-muted);cursor:pointer;
+      position:relative;
+      transition:background-color var(--dur-ui) var(--ease-ui),color var(--dur-ui) var(--ease-ui);
+    }
+    .seg button::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
+    .seg button:hover{color:var(--paper-ink)}
+    .seg button[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent);font-weight:500}
+    .seg button[aria-busy="true"]{opacity:.55;cursor:progress}
+    .seg button[disabled]{opacity:.4;cursor:default}
+    .seg button[hidden]{display:none}
+
+    .group-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+    .loading{font-size:13px;line-height:18px;color:var(--paper-muted)}
+    .loading[hidden]{display:none}
+    .obj-note{margin:0;font-size:13px;line-height:18px;color:var(--paper-muted)}
+
+    .rows{display:contents}
+    .rows[hidden]{display:none}
+    .hint{color:var(--paper-muted);transition:opacity var(--dur-scene) var(--ease-scene)}
+    .hint.is-gone{opacity:0}
+
+    .back{
+      font-size:13px;line-height:18px;color:var(--paper-muted);
+      text-decoration:underline;text-underline-offset:3px;
+      position:relative;pointer-events:auto;
+      transition:color var(--dur-ui) var(--ease-ui);
+    }
+    .back:hover,.back:focus-visible{color:var(--paper-ink)}
+    .back::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
+
+    :where(button,a):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+    @media (prefers-reduced-motion:reduce){
+      .hint,.seg button,.back,.tabs button{transition-duration:.01ms}
+    }
+
+    /* B: a settings panel, Stripe's drawer and Carbon's side panel: one card on
+       the right, a section per choice. On a phone it is a bottom sheet. */
+    .tray{
+      position:fixed;z-index:3;top:24px;right:24px;width:320px;
+      padding:24px;
+      display:flex;flex-direction:column;gap:24px;
+    }
+    .tray section + section{border-top:1px solid var(--line);padding-top:24px;margin-top:-0px}
+    .tray h2{margin:0 0 8px}
+    .list{display:flex;flex-direction:column;margin:0 -24px}
+    .list button{
+      appearance:none;border:0;margin:0;background:none;
+      display:flex;align-items:center;gap:12px;
+      min-height:44px;padding:0 24px;
+      font:inherit;font-size:14px;line-height:20px;color:var(--paper-ink);text-align:left;cursor:pointer;
+      border-top:1px solid var(--line);
+      transition:background-color var(--dur-ui) var(--ease-ui);
+    }
+    .list button:last-child{border-bottom:1px solid var(--line)}
+    .list button:hover{background:color-mix(in srgb,var(--accent-tint) 45%,transparent)}
+    .list button::before{
+      content:"";flex:none;width:16px;height:16px;border-radius:50%;
+      box-shadow:inset 0 0 0 1px var(--input);background:var(--surface);
+    }
+    .list button[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent);font-weight:500;box-shadow:inset 2px 0 0 var(--accent)}
+    .list button[aria-pressed="true"]::before{box-shadow:inset 0 0 0 5px var(--accent)}
+    .list button[aria-busy="true"]{opacity:.55;cursor:progress}
+    .list button[disabled]{opacity:.4;cursor:default}
+    .tray .obj-note{margin-top:12px}
+    .seg{display:flex}
+    .seg button{flex:1;padding:0 4px}
+    .tray .back{align-self:flex-start}
+    @media (max-width:1023px){
+      .tray{top:auto;left:12px;right:12px;bottom:12px;width:auto;padding:16px;gap:16px}
+      .tray section + section{padding-top:16px}
+      /* On a phone the three objects sit in one row, so the sheet stays short. */
+      .list{margin:0 -16px;flex-direction:row;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+      .list button{flex:1;justify-content:center;gap:8px;padding:0 8px;border:0}
+      .list button + button{border-left:1px solid var(--line)}
+      .list button:last-child{border-bottom:0}
+      .list button[aria-pressed="true"]{box-shadow:inset 0 -2px 0 var(--accent)}
+      .tray .back{align-self:center}
+    }
+    @media (min-width:640px) and (max-width:1023px){.tray{left:50%;right:auto;width:420px;transform:translateX(-50%)}}
+    /* ---- B tight: the sheet under 1024 (Levi 8f676c6d) ---- */
+    .mast-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    /* From 1024 the panel starts under the name, so the card no longer covers it (the mast ends at 52px). */
+    @media (min-width:1024px){.tray{top:72px}}
+    /* B's object list sets its transition after the page's reduce rule, so it needs its own, after it. */
+    @media (prefers-reduced-motion:reduce){.list button{transition-duration:.01ms}}
+    .mast-side .mast-me{flex:none}
+    .mast-back{display:none}
+    @media (max-width:1023px){
+      .mast h1{flex:1;min-width:0}
+      .mast-back{display:inline}
+      .tray .back{display:none}
+      .tray{padding:12px 16px;gap:0}
+      .tray .rows{display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:16px;row-gap:8px;align-items:center}
+      .tray section{display:contents}
+      .tray section + section{border-top:0;padding-top:0}
+      .tray h2,.tray .group-head{grid-column:1;margin:0}
+      .tray .group-head{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+      .tray h2{font-size:13px;line-height:18px;font-weight:400;color:var(--paper-muted)}
+      .tray .list,.tray .seg,.tray .obj-note{grid-column:2}
+      .tray .obj-note{margin:0}
+      /* the objects as a switcher, same edge and height as the states */
+      .tray .list{
+        margin:0;display:flex;flex-direction:row;padding:2px;gap:2px;
+        border:1px solid var(--input);border-radius:var(--radius);background:var(--surface);
+      }
+      .tray .list button,.tray .list button + button,.tray .list button:last-child{
+        flex:1;justify-content:center;min-height:0;height:30px;padding:0 4px;gap:0;
+        border:0;border-radius:6px;color:var(--paper-muted);position:relative;
+      }
+      .tray .list button::before{content:none}
+      .tray .list button::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}
+      .tray .list button:hover{background:none;color:var(--paper-ink)}
+      .tray .list button[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent);box-shadow:none}
+    }
+    @media (min-width:640px) and (max-width:1023px){
+      .tray{left:0;right:0;margin-inline:auto;width:560px;transform:none}
+    }
+    @media (max-width:639px){
+      .mast-side{padding-top:5px;gap:4px}
+      .mast-side .mast-me{padding-top:0}
+      .tray .rows{grid-template-columns:minmax(0,1fr);row-gap:4px}
+      .tray h2,.tray .group-head,.tray .list,.tray .seg,.tray .obj-note{grid-column:1}
+      .tray .group-head{flex-direction:row;justify-content:space-between;align-items:baseline}
+      .tray .obj-note{margin-bottom:8px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- The label is the default object's own, and choose() rewrites it per pick.
+       It has to be right before a single byte of the first scan has landed. -->
+  <canvas id="gl" aria-label="a scan of a colossal olmec head you can turn with a drag and light with your pointer"></canvas>
+
+  <header class="mast">
+    <h1 class="type-page-title">exploration of 3D objects</h1>
+    <div class="mast-side">
+      <p class="mast-me">levi adissi</p>
+      <a class="back mast-back" href="./">back to the site</a>
+    </div>
+  </header>
+
+  <div class="tray card" data-layout="side">
+    <div class="rows" id="rows">
+      <section aria-labelledby="objLabel">
+        <div class="group-head"><h2 class="type-section-title" id="objLabel">object</h2><span class="loading" id="loading" role="status" aria-live="polite">loading</span></div>
+        <div class="list" role="group" aria-labelledby="objLabel">
+          <button type="button" data-object="olmec" aria-pressed="false">olmec</button>
+          <button type="button" data-object="rex" aria-pressed="false">rex</button>
+          <button type="button" data-object="vishnu" aria-pressed="false">vishnu</button>
+        </div>
+        <p class="obj-note" id="objNote">cast of an olmec colossal head, veracruz, ca. 500 b.c. from smithsonian 3d.</p>
+      </section>
+      <section aria-labelledby="stateLabel">
+        <h2 class="type-section-title" id="stateLabel">state of matter</h2>
+        <div class="seg" role="group" aria-labelledby="stateLabel">
+          <button type="button" data-state="particles" aria-pressed="false">particles</button>
+          <button type="button" data-state="bones" aria-pressed="false">bones</button>
+          <button type="button" data-state="skin" aria-pressed="true">skin</button>
+          <button type="button" data-state="ink" aria-pressed="false">ink</button>
+        </div>
+      </section>
+    </div>
+    <a class="back" href="./">back to the site</a>
+  </div>
+
+  <script type="module">
+    "use strict";
+
+    import * as THREE from "three";
+
+    /* ---------- shared ---------- */
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const mqRM = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const clamp01 = t => clamp(t, 0, 1);
+    const smooth = k => k * k * (3 - 2 * k);
+    // Deterministic hash noise, so a reload scatters the particle shell to the
+    // same places and the page composes identically twice.
+    const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+    // Exponential approach, frame-rate independent.
+    const approach = (dt, rate) => 1 - Math.exp(-dt * rate);
+
+    const loadingEl = document.getElementById("loading");
+    const stateBtns = [...document.querySelectorAll("[data-state]")];
+    const objectBtns = [...document.querySelectorAll("[data-object]")];
+
+    /* ---------- the objects ---------- */
+
+    // Attribution lives here rather than in the page copy. The scans are third
+    // party captures and the page never claims them:
+    //   olmec   Smithsonian 3D Digitization, a cast of San Lorenzo Colossal
+    //           Head no. 1
+    //           https://3d.si.edu/object/3d/cast-san-lorenzo-head-no-1:aa4a35c7-0e59-4285-83d5-9e81aa423265
+    //   rex     Smithsonian 3D Digitization, the Nation's T. rex posed over a
+    //           Triceratops, five files that are one scene
+    //           https://3d.si.edu/object/3d/tyrannosaurus-and-triceratops:d8c62d28-4ebc-11ea-b77f-2e728ce88125
+    //   vishnu  Molding of the central part of the east lintel of Prasat
+    //           Krahom, depicting Vishnu Narasimha
+    //           https://threedscans.com/uncategorized/molding-of-the-central-part-of-east-lintel-of-prasat-krahom-depicting-vishnu-narasimha/
+    //
+    // The Smithsonian files come off the Voyager API rather than those pages:
+    //   https://3d-api.si.edu/content/document/3d_package:<uuid>/document.json
+    // It serves fine with a browser User-Agent. Only a bare curl UA gets a 403,
+    // which is what makes the object pages look unreachable from a script.
+    //
+    // Every Smithsonian file is KHR_draco_mesh_compression, so the decoder is
+    // not optional. The `-low` set is the same geometry as the medium set with
+    // 1024px textures instead of 2048px, which is why it is the one that ships:
+    // it costs 6.5MB instead of 17.7MB and loses nothing at playground scale.
+    const REX = ["trex-p1", "trex-p2", "trex-p3", "trex-p4", "triceratops"]
+      .map(n => `./assets/playground/${n}-low.glb`);
+
+    // olmec is first because it is the default: one 1.5MB file, the fastest of
+    // the three to land, and the one that reads at a glance.
+    const DEFS = {
+      olmec: {
+        key: "olmec",
+        files: ["./assets/playground/olmec-head.glb"],
+        aria: "a scan of a colossal olmec head you can turn with a drag and light with your pointer",
+        // Photogrammetric albedo already carries its own light, so it needs
+        // less of ours than a flat untextured grey does.
+        albedo: 0.62, bones: 0.10, orient: [0, 0, 0],
+      },
+      rex: {
+        key: "rex",
+        files: REX,
+        aria: "a scan of a tyrannosaurus rex posed over a triceratops, which you can turn with a drag and light with your pointer",
+        // The five files are z up, so the whole mount arrives lying on its
+        // back: x brings it upright, y turns it side on rather than nose on.
+        albedo: 0.62, bones: 0.08, orient: [-90, 90, 0],
+        // Broadside at rest, which is the only facing that reads on a phone.
+        // A mount this long presents 228px of a 375 screen at the page's usual
+        // three quarter rest angle and 317px square on, and it cannot be scaled
+        // up to close that gap because square on is already 92% of the width.
+        // The elevation from the resting tilt is what keeps it from reading
+        // flat, and any touch turns it anyway.
+        face: 0,
+      },
+      vishnu: {
+        key: "vishnu",
+        files: ["./assets/playground/vishnu-narasimha-hi.glb"],
+        aria: "a scan of a sculpture of vishnu as narasimha you can turn with a drag and light with your pointer",
+        // A half turn about y, NOT the [0,0,180] the old cut carried, and the
+        // difference is the pipeline rather than the sculpt. This file comes
+        // straight off Levi's OBJ in the source's own axes; the old one went
+        // through Blender, whose z-up round trip left it turned differently.
+        // The relief is carved on one face only, so getting this wrong shows
+        // the blank back of the slab, which still reads as a plausible object
+        // and is why this was checked in the browser against the accepted
+        // build rather than reasoned out: [0,0,180] is the back of the slab,
+        // [0,180,180] is the carving upside down.
+        //
+        // 0.10 rather than the 0.24 the old cut wanted: bone alpha is set by
+        // how dense the wireframe is, and this mesh is 150,000 triangles like
+        // the olmec instead of 36,000, so it takes the olmec's number. Left at
+        // 0.24 it draws as a solid black blob.
+        albedo: 1, bones: 0.10, orient: [0, 180, 0],
+      },
+    };
+
+    // Every object is normalised to the same longest edge, so the camera is
+    // tuned once and never per object. This is dir-object.html's MODEL_FIT.
+    const FIT = 2;
+    // Then the whole group is scaled to fill the frame off that object's own
+    // size, measured at the resting camera distance so a dolly does not fight
+    // the fit. Normalising alone is not enough: the rex mount is a 2.8:1 box,
+    // so a longest-edge fit alone left it at a third of the height the olmec
+    // takes, which is the "reads badly at playground scale" case the plan
+    // asked to watch for.
+    //
+    // The two margins are different on purpose. Vertically the object shares
+    // the screen with the masthead and the control rows, so it takes 72% of
+    // the band between them. Horizontally it shares the screen with nothing,
+    // so it takes 92% of the width. One margin for both was what left the rex
+    // at 107px on a 375 phone.
+    const FRAME_W = 0.92, FRAME_H = 0.72, DIST_REF = 4;
+    // Where the turn sits with no hand on it. Named here because an object's
+    // `face` is expressed against it, so the two cannot drift apart.
+    const SPIN_REST = { x: 0.16, y: 0.5 };
+    // Every object's cloud is capped to this, so a 150k triangle scan and a 36k
+    // one are the same kind of drawing rather than two different densities.
+    const PBUDGET = 9000;
+
+    const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const INK = new THREE.Color(tok("--paper-ink"));
+    // The page's base material colour, and it is load bearing twice: it is the
+    // fallback albedo for a scan that ships no material of its own, and it is
+    // the colour of every object's ink state.
+    const PIGMENT = new THREE.Color(tok("--paper-muted")); /* the albedo that reads on paper */
+
+    let three = null; // stays null if WebGL is unavailable; the copy still reads
+    try {
+      const canvas = document.getElementById("gl");
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setClearColor(0x000000, 0);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 30);
+      camera.position.set(0, 0, 4);
+
+      const group = new THREE.Group();
+      scene.add(group);
+
+      /* Ink's own rendering. Three hard values of one ink turn the lambert term
+         into a woodcut rather than a silhouette; continuous tone is what `skin`
+         is for, so the difference between the two states is the rendering. */
+      const ramp = new THREE.DataTexture(
+        new Uint8Array([56, 56, 56, 255, 148, 148, 148, 255, 255, 255, 255, 255]), 3, 1);
+      ramp.minFilter = ramp.magFilter = THREE.NearestFilter;
+      ramp.needsUpdate = true;
+
+      /* ---------- particles, shared by every object ---------- */
+
+      // One cloud, sized to the budget once. Only the active object's samples
+      // are ever read, so switching object costs no allocation.
+      const start = new Float32Array(PBUDGET * 3), pos = new Float32Array(PBUDGET * 3),
+            delay = new Float32Array(PBUDGET);
+      for (let i = 0; i < PBUDGET; i++) {
+        const az = hash(i * 2 + 1) * Math.PI * 2, el = Math.acos(2 * hash(i * 2 + 2) - 1),
+              rr = 2.1 + hash(i * 3 + 5) * 1.3;
+        start[i * 3] = rr * Math.sin(el) * Math.cos(az);
+        start[i * 3 + 1] = rr * Math.cos(el);
+        start[i * 3 + 2] = rr * Math.sin(el) * Math.sin(az);
+        delay[i] = hash(i * 5 + 7) * 0.3;
+      }
+      const ptsGeo = new THREE.BufferGeometry();
+      ptsGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      const ptsMat = new THREE.PointsMaterial({
+        // Paper needs more per point contrast than night did to hold a cloud.
+        color: INK.clone(), size: 0.018, sizeAttenuation: true,
+        transparent: true, opacity: 0, depthWrite: false,
+      });
+      const pts = new THREE.Points(ptsGeo, ptsMat);
+      pts.frustumCulled = false; // scattered points start outside every object's bounds
+      group.add(pts);
+      let ptsT = -1;
+      function setParticles(t) {
+        if (t === ptsT) return;
+        ptsT = t;
+        const s = active.samples, n = active.count;
+        for (let i = 0; i < n; i++) {
+          const k = smooth(clamp01((t - delay[i]) / (1 - delay[i])));
+          pos[i * 3] = lerp(start[i * 3], s[i * 3], k);
+          pos[i * 3 + 1] = lerp(start[i * 3 + 1], s[i * 3 + 1], k);
+          pos[i * 3 + 2] = lerp(start[i * 3 + 2], s[i * 3 + 2], k);
+        }
+        ptsGeo.attributes.position.needsUpdate = true;
+      }
+
+      /* Lights: one key you can steer, a fixed fill so the dark side keeps its
+         shape, on a paper ground so nothing needs to be lifted out of black.
+         Brighter than the night version needed: on paper the object has to sit
+         in the page rather than punch a hole in it, so the shadow side stays
+         above the muted grey instead of falling to black.
+
+         Ink wants the opposite of that. A big ambient flattens its three tones
+         into one grey, so the ambient and the fill are dialled down by how much
+         ink is on screen. An earlier pass tried to do this with two light rigs
+         on two layers, which does not work: three tests a light's layers
+         against the CAMERA, not against the lit object (WebGLRenderer
+         projectObject, r170), so with camera.layers.enableAll() every light
+         reached every object and ink rendered at ambient 1.75 rather than the
+         0.25 the comment claimed. */
+      const AMB_LIT = 1.5, AMB_INK = 0.25, FILL_LIT = 0.8;
+      const amb = new THREE.AmbientLight(0xffffff, AMB_LIT);
+      scene.add(amb);
+      const key = new THREE.DirectionalLight(0xffffff, 3.4);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xffffff, FILL_LIT);
+      fill.position.set(-2.5, -1, 2);
+      scene.add(fill);
+
+      /* ---------- loading a scan ---------- */
+
+      // The loaders are still lazy, even though the default object needs them
+      // immediately: they are imported on the first pick rather than at parse
+      // time, so the page paints its copy before it pays for the decoder.
+      let loaderPromise = null;
+      function loader() {
+        if (!loaderPromise) loaderPromise = (async () => {
+          const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
+            import("three/addons/loaders/GLTFLoader.js"),
+            import("three/addons/loaders/DRACOLoader.js"),
+          ]);
+          const draco = new DRACOLoader();
+          // Pinned to the same three release as the importmap, so the decoder
+          // and the loader can never drift apart.
+          draco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/");
+          const gltf = new GLTFLoader();
+          gltf.setDRACOLoader(draco);
+          return gltf;
+        })();
+        return loaderPromise;
+      }
+
+      // Walk the loaded meshes and take every nth vertex, in the space the
+      // shared cloud lives in. Photogrammetry vertices are close to uniform
+      // over the surface, so a stride is a fair sample of the whole object.
+      //
+      // The same walk measures maxR, the largest distance any vertex reaches
+      // from the y axis. That is the exact worst case width the object can
+      // present under a turn, and it is what the frame fit needs: half the
+      // box diagonal would be the worst case for a *box*, and it overstates a
+      // real mesh badly, which is another way the rex ended up small.
+      const V = new THREE.Vector3();
+      const M = new THREE.Matrix4(), MINV = new THREE.Matrix4();
+      function sampleMeshes(root, inner) {
+        root.updateMatrixWorld(true);
+        const meshes = [];
+        let total = 0;
+        inner.traverse(o => {
+          if (!o.isMesh) return;
+          meshes.push(o);
+          total += o.geometry.attributes.position.count;
+        });
+        const stride = Math.max(1, Math.ceil(total / PBUDGET));
+        const n = Math.min(PBUDGET, Math.floor(total / stride));
+        const out = new Float32Array(n * 3);
+        MINV.copy(root.matrixWorld).invert();
+        let seen = 0, w = 0, maxR2 = 0;
+        for (const mesh of meshes) {
+          M.multiplyMatrices(MINV, mesh.matrixWorld); // mesh space to root space
+          M.premultiply(root.matrix);                 // root space to group space
+          const p = mesh.geometry.attributes.position;
+          for (let i = 0; i < p.count; i++, seen++) {
+            // Every vertex is transformed, because maxR is a max and a stride
+            // would only ever under-report it.
+            V.fromBufferAttribute(p, i).applyMatrix4(M);
+            const r2 = V.x * V.x + V.z * V.z;
+            if (r2 > maxR2) maxR2 = r2;
+            if (seen % stride || w >= n) continue;
+            out[w * 3] = V.x; out[w * 3 + 1] = V.y; out[w * 3 + 2] = V.z;
+            w++;
+          }
+        }
+        return { samples: out, count: w, maxR: Math.sqrt(maxR2) };
+      }
+
+      function buildScan(def, scenes) {
+        const root = new THREE.Group();
+        const skin = new THREE.Group();
+        for (const s of scenes) skin.add(s);
+
+        // Up is a property of the file, not of the camera. YXZ order so the
+        // numbers in the table above read as "stand it up, then turn it".
+        const [ox, oy, oz] = def.orient;
+        skin.rotation.order = "YXZ";
+        skin.rotation.set(ox * Math.PI / 180, oy * Math.PI / 180, oz * Math.PI / 180);
+
+        // Centre and normalise off the merged bounding box, so the five files
+        // of the rex are one object and no camera is retuned per object. The
+        // centre offset is applied inside the scaled parent, so it is in model
+        // units; subtracting the scaled centre would throw the object offscreen.
+        const bounds = new THREE.Box3().setFromObject(skin);
+        const size = bounds.getSize(new THREE.Vector3());
+        root.scale.setScalar(FIT / Math.max(size.x, size.y, size.z));
+        skin.position.copy(bounds.getCenter(new THREE.Vector3())).multiplyScalar(-1);
+        root.add(skin);
+
+        // An object may name the angle it should sit at with no hand on it,
+        // in degrees from square on. Applied to root rather than to the orient
+        // triple, because orient describes the file and this describes the
+        // shot. maxR is invariant under this turn and ext.y is untouched by it,
+        // so the frame fit below reads the same either way.
+        if (def.face !== undefined) {
+          root.rotation.y = def.face * Math.PI / 180 - SPIN_REST.y;
+        }
+
+        const ink = skin.clone(true);
+        const bones = skin.clone(true);
+        root.add(ink, bones);
+
+        skin.renderOrder = 2; ink.renderOrder = 3; bones.renderOrder = 1;
+
+        const skinMats = [], inkMats = [], boneMats = [];
+        let tris = 0, verts = 0;
+
+        skin.traverse(o => {
+          if (!o.isMesh) return;
+          const g = o.geometry;
+          tris += (g.index ? g.index.count : g.attributes.position.count) / 3;
+          verts += g.attributes.position.count;
+          // A scan with no baked material of its own gets the page's base
+          // colour, so it reads as the same kind of object rather than as
+          // default white. The vishnu is exactly this case.
+          const m = o.material && o.material.map
+            ? o.material
+            : new THREE.MeshStandardMaterial({
+                color: PIGMENT.clone(), roughness: 0.52, metalness: 0.04 });
+          // Materials are shared between primitives, so the albedo trim has to
+          // happen once per material and not once per mesh.
+          if (!skinMats.includes(m)) {
+            if (m.map && def.albedo !== 1) m.color.multiplyScalar(def.albedo);
+            m.transparent = true; m.depthWrite = true; m.opacity = 0;
+            skinMats.push(m);
+          }
+          o.material = m;
+          o.renderOrder = 2;
+        });
+
+        const inkMaterial = new THREE.MeshToonMaterial({
+          color: PIGMENT.clone(), gradientMap: ramp,
+          transparent: true, opacity: 0, depthWrite: true,
+        });
+        inkMats.push(inkMaterial);
+        ink.traverse(o => { if (o.isMesh) { o.material = inkMaterial; o.renderOrder = 3; } });
+
+        // A 400k triangle wireframe at full ink weight is a solid black blob,
+        // so bones on a scan is the same drawing at the alpha its own density
+        // can carry. That is the graceful degrade, and the number is in the
+        // object table above rather than hidden here.
+        const boneMaterial = new THREE.MeshBasicMaterial({
+          color: INK.clone(), wireframe: true,
+          transparent: true, opacity: 0, depthWrite: false,
+        });
+        boneMats.push(boneMaterial);
+        bones.traverse(o => { if (o.isMesh) { o.material = boneMaterial; o.renderOrder = 1; } });
+
+        const { samples, count, maxR } = sampleMeshes(root, skin);
+        // Measured while root is still outside the group, so the number is the
+        // object's own size and not the size the last resize left behind.
+        const ext = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+
+        root.visible = false;
+        group.add(root);
+        return {
+          key: def.key, def, root, skin, ink, bones,
+          skinMats, inkMats, boneMats,
+          boneAlpha: def.bones, samples, count, tris, verts, maxR,
+          ext: { x: ext.x, y: ext.y, z: ext.z },
+        };
+      }
+
+      /* ---------- state of matter ---------- */
+
+      const STATES = ["particles", "bones", "skin", "ink"];
+      const op = { particles: 0, bones: 0, skin: 1, ink: 0 };
+      let state = "skin";
+      let form = 1; // 0 = scattered shell, 1 = the cloud holding the form
+      // Null until the first scan lands. Every object on this page is a file,
+      // so there is no longer anything to draw at frame 0, and the four places
+      // that read `active` each say what they do while it is empty rather than
+      // being fenced off behind one flag.
+      let active = null;
+
+      function setState(s) {
+        if (s === state || !STATES.includes(s)) return;
+        state = s;
+        for (const b of stateBtns) b.setAttribute("aria-pressed", String(b.dataset.state === s));
+        if (mqRM.matches) {
+          for (const k of STATES) op[k] = k === s ? 1 : 0;
+          form = 1;
+          render();
+        } else if (s === "particles") {
+          form = 0; // arriving at the cloud condenses it, the old first beat
+        }
+      }
+
+      // Every state is applied to whichever object is active, so an object
+      // switch keeps the state you were already in.
+      function applyState() {
+        ptsMat.opacity = 0.9 * op.particles;
+        // Deref site 1 and 2 at once: with no object there is no cloud to hold
+        // and no material to fade, so the frame is the empty page.
+        pts.visible = active !== null && ptsMat.opacity > 0.004;
+        if (!active) return;
+        const bo = active.boneAlpha * op.bones;
+        for (const m of active.boneMats) m.opacity = bo;
+        active.bones.visible = bo > 0.004;
+        for (const m of active.skinMats) m.opacity = op.skin;
+        active.skin.visible = op.skin > 0.004;
+        for (const m of active.inkMats) m.opacity = op.ink;
+        active.ink.visible = op.ink > 0.004;
+        amb.intensity = lerp(AMB_LIT, AMB_INK, op.ink);
+        fill.intensity = FILL_LIT * (1 - op.ink);
+      }
+
+      function activate(rec) {
+        if (rec === active) return;
+        if (active) active.root.visible = false; // nothing to hide on the first one
+        active = rec;
+        rec.root.visible = true;
+        ptsT = -1; // a different cloud, so the cached parameter is meaningless
+        if (!mqRM.matches && state === "particles") form = 0;
+        fitGroup(); // a different box wants a different scale in the same frame
+        canvas.setAttribute("aria-label", rec.def.aria);
+        for (const b of objectBtns) b.setAttribute("aria-pressed", String(b.dataset.object === rec.key));
+        document.getElementById("objNote").textContent = {
+          olmec: "cast of an olmec colossal head, veracruz, ca. 500 b.c. from smithsonian 3d.",
+          rex: "mounted t. rex skeleton, late cretaceous, montana. from smithsonian 3d.",
+          vishnu: "plaster cast of vishnu narasimha, prasat krahom lintel, cambodia. from three d scans.",
+        }[rec.key];
+        if (mqRM.matches) render();
+      }
+
+      /* ---------- pointer, throw, rake, dolly ---------- */
+
+      const REST = { az: -0.7, el: 0.55 };
+      const light = { az: REST.az, el: REST.el, tAz: REST.az, tEl: REST.el, idle: 0 };
+      const spin = { x: SPIN_REST.x, y: SPIN_REST.y, vel: 0, dragging: false, lastX: 0, lastY: 0, lastT: 0, idle: 1 };
+      const DIST_MIN = 3.0, DIST_MAX = 6.4; // never clips the near plane, never shrinks past reading
+      let dist = 4, tDist = 4;
+      let pinchStart = 0, pinchDist = 0;
+
+      canvas.addEventListener("pointermove", e => {
+        light.tAz = (e.clientX / innerWidth - 0.5) * 2.6;
+        light.tEl = (0.5 - e.clientY / innerHeight) * 1.6 + 0.4;
+        light.idle = 0;
+        if (spin.dragging && !pinchStart) {
+          const now = performance.now(), dt = Math.max(8, now - spin.lastT);
+          const dx = e.clientX - spin.lastX, dy = e.clientY - spin.lastY;
+          spin.y += dx * 0.007;
+          spin.x = clamp(spin.x + dy * 0.004, -0.9, 0.9);
+          spin.vel = lerp(spin.vel, dx / dt * 7, 0.4); // rad/s, smoothed
+          spin.lastX = e.clientX; spin.lastY = e.clientY; spin.lastT = now;
+          // A hand in the cloud stirs it, and it re-gathers once the hand stops.
+          if (!mqRM.matches && op.particles > 0.01) {
+            form = Math.max(0.88, form - (Math.abs(dx) + Math.abs(dy)) * 0.0006);
+          }
+        }
+        if (mqRM.matches) { light.az = light.tAz; light.el = light.tEl; render(); }
+      });
+      canvas.addEventListener("pointerdown", e => {
+        // A tap counts as engagement, not just a move: the lesson from 2fbb8bb.
+        spin.dragging = true; spin.vel = 0; spin.idle = 0;
+        spin.lastX = e.clientX; spin.lastY = e.clientY; spin.lastT = performance.now();
+        if (mqRM.matches) render();
+      });
+      const release = () => {
+        spin.dragging = false;
+        if (mqRM.matches) { spin.vel = 0; render(); } // release is stop, with no coast
+      };
+      canvas.addEventListener("pointerup", release);
+      canvas.addEventListener("pointercancel", release);
+      canvas.addEventListener("pointerleave", release);
+
+      canvas.addEventListener("wheel", e => {
+        e.preventDefault();
+        tDist = clamp(tDist + e.deltaY * 0.0025, DIST_MIN, DIST_MAX);
+        if (mqRM.matches) { dist = tDist; render(); }
+      }, { passive: false });
+
+      // Two fingers dolly. The page does not scroll, so nothing else wants the
+      // gesture, and the second touchstart cancels the orbit the first one armed.
+      const spread = t => Math.hypot(
+        t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      canvas.addEventListener("touchstart", e => {
+        if (e.touches.length === 2) {
+          pinchStart = Math.max(1, spread(e.touches));
+          pinchDist = tDist;
+          spin.dragging = false; spin.vel = 0;
+        }
+      }, { passive: false });
+      canvas.addEventListener("touchmove", e => {
+        if (e.touches.length === 2 && pinchStart) {
+          e.preventDefault();
+          tDist = clamp(pinchDist * (pinchStart / Math.max(1, spread(e.touches))), DIST_MIN, DIST_MAX);
+          if (mqRM.matches) { dist = tDist; render(); }
+        }
+      }, { passive: false });
+      const endPinch = e => { if (e.touches.length < 2) pinchStart = 0; };
+      canvas.addEventListener("touchend", endPinch);
+      canvas.addEventListener("touchcancel", endPinch);
+
+      let aspect = 1, baseScale = 1;
+      const mast = document.querySelector(".mast"), tray = document.querySelector(".tray");
+      // The object is framed by whichever of its own edges runs out of room
+      // first, measured at the resting distance so the dolly stays free. Two
+      // things this has to get right that a plain longest-edge fit does not:
+      // the vertical room is the band between the masthead and the control
+      // rows rather than the whole viewport, and the object is centred in that
+      // band, so a taller tray on a phone moves the object up instead of
+      // running it under the copy. And the horizontal reach is the object's
+      // own maxR, which no turn can exceed, so the width margin can be as
+      // tight as it looks rather than paying for a worst case that the mesh
+      // never actually reaches.
+      //
+      // The width bound is perspective correct, and it has to be. A point at
+      // radius r projects widest not when it is side on but when it has swung
+      // partly toward the camera, at cos(angle) = r / DIST_REF, where it
+      // subtends r / sqrt(DIST_REF^2 - r^2). Solving that for r against the
+      // frame is a closed form. The flat r / DIST_REF version of the same
+      // bound reads 11% too generous at 1440 and clips the rex's tail tip off
+      // the left edge, which is exactly the kind of thing a screenshot at one
+      // spin angle does not show you.
+      //
+      // The height bound stays flat, and is an approximation on purpose: the
+      // exact worst case wants a vertex to sit at full height and full depth
+      // at once, which no object here does, and applying it shrank the object
+      // it was measured against by 15% to buy clearance that was already
+      // measured at 50 to 160px.
+      function fitGroup() {
+        // Deref site 3. Nothing is on screen to frame yet, and activate() calls
+        // this again the moment there is.
+        if (!active) return;
+        const tanHalf = Math.tan(camera.fov * Math.PI / 360);
+        const halfH = DIST_REF * tanHalf;
+        const perPx = 2 * halfH / innerHeight; // world units per css pixel
+        const top = mast.getBoundingClientRect().bottom;
+        // Mock B: beside the panel the band is the whole height, and the object
+        // centres in the room left of the panel instead of under it.
+        const side = tray.dataset.layout === "side" && innerWidth >= 1024;
+        const bottom = side ? innerHeight - 24 : tray.getBoundingClientRect().top;
+        const band = Math.max(120, bottom - top);
+        const t = FRAME_W * tanHalf * aspect;
+        baseScale = Math.min(
+          (t * DIST_REF / Math.sqrt(1 + t * t)) / active.maxR,
+          FRAME_H * (band / 2 * perPx) / (active.ext.y / 2));
+        group.scale.setScalar(baseScale);
+        group.position.y = (innerHeight / 2 - (top + bottom) / 2) * perPx;
+        group.position.x = side ? (tray.getBoundingClientRect().left / 2 - innerWidth / 2) * perPx : 0;
+      }
+      function resize() {
+        const w = innerWidth, h = innerHeight;
+        renderer.setPixelRatio(DPR);
+        renderer.setSize(w, h, false);
+        aspect = w / h;
+        camera.aspect = aspect; camera.updateProjectionMatrix();
+        fitGroup();
+        if (mqRM.matches) render();
+      }
+
+      /* ---------- the frame ---------- */
+
+      let lastNow = 0, frames = 0;
+      function render(now = performance.now()) {
+        const dt = Math.min(0.05, (now - lastNow) / 1000 || 0.016);
+        lastNow = now;
+        frames++;
+        const rm = mqRM.matches;
+
+        // States crossfade on the scene beat, driven by the state change and
+        // nothing else. Under reduced motion setState already cut them.
+        if (!rm) {
+          const k = approach(dt, 7.5); // ~600ms to settle
+          for (const s of STATES) op[s] = lerp(op[s], s === state ? 1 : 0, k);
+        }
+        applyState();
+
+        // The cloud gathers, and only ever loses ground to a hand in it.
+        if (!rm && op.particles > 0.004) form = Math.min(1, form + (1 - form) * approach(dt, 1.9));
+        if (pts.visible) { setParticles(form); ptsGeo.setDrawRange(0, active.count); }
+
+        // Your throw carries, decays, and hands back to the resting turn. The
+        // idle rate eases in rather than snapping on, so a settle is one motion.
+        if (!rm) {
+          if (!spin.dragging) {
+            spin.vel *= Math.exp(-dt * 1.9);
+            if (Math.abs(spin.vel) < 0.14) spin.idle += (1 - spin.idle) * approach(dt, 0.8);
+            spin.x += (SPIN_REST.x - spin.x) * approach(dt, 0.3);
+          }
+          spin.y += (spin.vel + 0.035 * spin.idle) * dt;
+        }
+        group.rotation.set(spin.x, spin.y, 0);
+
+        // The key light follows the pointer, then eases home after ~2s idle.
+        if (!rm) {
+          light.idle += dt;
+          if (light.idle > 2) {
+            light.tAz = lerp(light.tAz, REST.az, approach(dt, 0.9));
+            light.tEl = lerp(light.tEl, REST.el, approach(dt, 0.9));
+          }
+          light.az = lerp(light.az, light.tAz, approach(dt, 6));
+          light.el = lerp(light.el, light.tEl, approach(dt, 6));
+          dist = lerp(dist, tDist, approach(dt, 8));
+        }
+        key.position.setFromSphericalCoords(4, Math.PI / 2 - light.el, light.az);
+        camera.position.z = dist;
+
+        renderer.render(scene, camera);
+      }
+
+      /* ---------- choosing an object ---------- */
+
+      const built = new Map();
+      const pending = new Map();
+      let wanted = null, inflight = 0;
+
+      function load(def) {
+        if (!pending.has(def.key)) {
+          pending.set(def.key, (async () => {
+            const gl = await loader();
+            const scenes = await Promise.all(def.files.map(f => new Promise(
+              (res, rej) => gl.load(f, g => res(g.scene), undefined, rej))));
+            const rec = buildScan(def, scenes);
+            built.set(def.key, rec);
+            return rec;
+          })().catch(err => { pending.delete(def.key); throw err; }));
+        }
+        return pending.get(def.key);
+      }
+
+      async function choose(key) {
+        const def = DEFS[key];
+        if (!def) return;
+        wanted = key;
+        if (built.has(key)) { activate(built.get(key)); return; }
+        const btn = objectBtns.find(b => b.dataset.object === key);
+        // The object on screen stays live while the next one arrives: nothing
+        // is torn down until there is something to put in its place.
+        inflight++;
+        loadingEl.hidden = false;
+        if (btn) btn.setAttribute("aria-busy", "true");
+        try {
+          const rec = await load(def);
+          if (wanted === key) activate(rec); // a faster second click wins
+        } catch (err) {
+          if (btn) { btn.disabled = true; btn.title = "this one did not load"; }
+          loadingEl.textContent = "unavailable";
+          setTimeout(() => { loadingEl.textContent = "loading"; }, 2400);
+        } finally {
+          if (btn) btn.removeAttribute("aria-busy");
+          // The word goes only when nothing at all is still arriving, so a
+          // second pick during a first load does not clear its own hint.
+          if (--inflight === 0) loadingEl.hidden = true;
+        }
+      }
+
+      three = {
+        resize, render, setState, choose,
+        // The probe surface, in the shape type-object.html already uses: enough
+        // to assert on from the outside, nothing the page itself reads.
+        //
+        // Deref site 4. Before the first scan lands `object` is null and every
+        // per-object field is absent rather than zero, so a probe cannot read a
+        // real-looking 0 triangles off an empty page and call it a measurement.
+        read: () => ({
+          object: active ? active.key : null, state, frames,
+          spinX: +spin.x.toFixed(6), spinY: +spin.y.toFixed(6),
+          dist: +dist.toFixed(6), tDist: +tDist.toFixed(6),
+          ...(active ? {
+            points: active.count, tris: active.tris, verts: active.verts,
+            ext: active.ext, maxR: +active.maxR.toFixed(6),
+            scale: +baseScale.toFixed(4),
+            // The exact widest the object can present under any turn, in css
+            // px, by the same perspective bound the fit is solved against.
+            widestPx: (() => {
+              const r = active.maxR * baseScale, tanHalf = Math.tan(camera.fov * Math.PI / 360);
+              return Math.round(2 * (r / Math.sqrt(DIST_REF * DIST_REF - r * r)) *
+                (innerHeight / 2) / tanHalf);
+            })(),
+          } : {}),
+          loaded: [...built.keys()],
+          op: { ...op },
+        }),
+      };
+    } catch (err) {
+      document.getElementById("gl").style.display = "none";
+      document.getElementById("rows").hidden = true;
+    }
+
+    /* ---------- boot ---------- */
+
+    if (three) {
+      for (const b of stateBtns) b.addEventListener("click", () => three.setState(b.dataset.state));
+      for (const b of objectBtns) b.addEventListener("click", () => three.choose(b.dataset.object));
+      window.addEventListener("resize", () => three.resize());
+      three.resize();
+      window.__form = three.read;
+      window.__formReady = true;
+      // The default object is fetched like any other pick, so there is exactly
+      // one code path onto the screen. Until it lands the page is paper and the
+      // word `loading`, which is already in the row's flow.
+      three.choose("olmec");
+    } else {
+      window.__formFailed = true;
+    }
+
+    let raf = 0;
+    function loop(now) { three.render(now); raf = requestAnimationFrame(loop); }
+    function setMode() {
+      cancelAnimationFrame(raf);
+      if (!three) return;
+      // Reduced motion: the object is lit and still. Every frame from here is
+      // one a hand asked for, so nothing is scheduled on a clock.
+      if (mqRM.matches) three.render();
+      else raf = requestAnimationFrame(loop);
+    }
+    mqRM.addEventListener("change", setMode);
+    setMode();
+  </script>
+</body>
+</html>

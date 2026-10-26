@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>breathing exercises</title>
+  <meta name="description" content="two breathing exercises you can actually follow: box breathing and the physiological sigh. a study by levi adissi.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E3E7DF'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%234F6E5B'/%3E%3C/svg%3E">
+  <style>
+    @font-face{
+      font-family:"Aspekta";
+      font-weight:100 900;
+      font-style:normal;
+      font-display:swap;
+      src:url("https://cdn.jsdelivr.net/gh/ivodolenc/aspekta@cd08efde1a0484c3626818ac59a6933e59f71531/packages/fonts/variable/AspektaVF.woff2") format("woff2");
+    }
+
+    :root{
+      color-scheme:light;
+
+      /* The same paper form.html holds and still.html surfaces into. No ground
+         ramp here either: the page has no journey, it has a practice. */
+      --paper:#F2EFE6;
+      --paper-ink:#171512;   /* 15.85:1 on --paper */
+      --paper-muted:#5F5C54; /* 5.8:1 */
+      --paper-line:#DFDACE;
+      --pill-fill:#D3E9E6;   /* teal tint, 1.1:1 on --paper */
+      --pill-ink:#0F5C56;    /* 6.17:1 on --pill-fill */
+      --pill-glint:rgba(255,255,255,.95); /* behind the words, so it only lifts the ink's contrast */
+
+      --body:"Aspekta",ui-sans-serif,system-ui,sans-serif;
+
+      /* Three small, one large, nothing between 18 and 47. The one large size
+         is the reduced-motion countdown, which is the only thing on the page
+         that has to be readable from across a room. */
+      --t-count:clamp(47px,13vw,64px);
+      --t-lede:18px;
+      --t-body:15px;
+      --t-small:13px;
+
+      --dur-ui:160ms;
+      --ease-ui:cubic-bezier(.4,0,.2,1);
+      --dur-scene:600ms;
+      --ease-scene:cubic-bezier(.19,1,.22,1);
+
+      --s1:8px;--s2:16px;--s3:24px;--s4:40px;
+      --col:min(640px,calc(100vw - 48px));
+    }
+
+    *{box-sizing:border-box}
+    html{background:var(--paper)}
+    body{
+      margin:0;
+      height:100dvh; /* dvh, not vh: ios safari's toolbar owns the difference */
+      position:relative;
+      background:var(--paper);
+      color:var(--paper-ink);
+      font:400 var(--t-body)/1.55 var(--body);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow:hidden;
+      overscroll-behavior:none;
+    }
+    p{margin:0}
+    a{color:inherit}
+    ::selection{background:var(--paper-ink);color:var(--paper)}
+
+    main{position:absolute;inset:0}
+
+    /* Two screens, one file. They crossfade on the scene beat and the one that
+       is not on screen is inert, so a tab never lands on a hidden control. */
+    .layer{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;
+      padding:18px 24px 20px;
+      opacity:0;pointer-events:none;
+      transition:opacity var(--dur-scene) var(--ease-scene);
+    }
+    .layer.is-on{opacity:1;pointer-events:auto}
+
+    .mast{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      gap:var(--s3);
+      flex:none;
+      font-size:var(--t-small);
+      color:var(--paper-muted);
+    }
+    .mast-title{
+      font-size:var(--t-lede);font-weight:600;
+      letter-spacing:-.02em;line-height:1.2;
+      color:var(--paper-ink);
+    }
+    .sub{margin-top:4px;max-width:34ch}
+    .mast-me{flex:none;padding-top:2px}
+
+    /* ---- menu ---- */
+
+    /* A list, not cards: hairlines and text. Nothing here is a tile, nothing
+       here has an icon, and the descriptions carry the weight. */
+    .list{
+      flex:1;min-height:0;
+      display:flex;flex-direction:column;justify-content:center;
+      width:var(--col);margin:0 auto;
+    }
+    .list button{
+      appearance:none;background:none;border:0;
+      border-top:1px solid var(--paper-line);
+      display:block;width:100%;margin:0;padding:14px 0 0;
+      font:inherit;color:var(--paper-muted);text-align:left;cursor:pointer;
+      transition:color var(--dur-ui) var(--ease-ui);
+    }
+    .list > :last-child{border-bottom:1px solid var(--paper-line)}
+    .list button:hover{color:var(--paper-ink)}
+    .row-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2)}
+    .row-name{color:var(--paper-ink)}
+    .row-time{flex:none;font-size:var(--t-small)}
+    .row-line{display:block;margin-top:3px;font-size:var(--t-small);line-height:1.5}
+    .row-pill{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s1);margin:0;padding:var(--s1) 0 15px;font-size:var(--t-small);line-height:1.5;color:var(--paper-muted)}
+    .badge{display:inline-flex;align-items:center;height:20px;padding:0 8px;border:1px solid transparent;border-radius:9999px;background:var(--pill-fill);color:var(--pill-ink);font-size:12px;font-weight:500;line-height:1;white-space:nowrap}
+    .row-pill a{color:var(--paper-ink);text-underline-offset:2px}
+    .badge{position:relative;overflow:hidden;isolation:isolate}
+    .badge-word{position:relative;z-index:1}
+    .glint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 42.7%,var(--pill-glint) 50%,transparent 57.3%) 100% 0/300% 100% no-repeat}
+
+    .foot{flex:none;text-align:center}
+    .back{
+      color:var(--paper-muted);
+      text-decoration:underline;text-underline-offset:3px;
+      transition:opacity var(--dur-ui) var(--ease-ui);
+    }
+    .back:hover,.back:focus-visible{opacity:.6}
+    .back{position:relative}
+    .back::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+
+    /* ---- guide ---- */
+
+    /* The stage owns everything between the two ends of the screen, so the disc
+       can be sized against its own box and can never reach the copy. */
+    .stage{flex:1;min-height:0;position:relative}
+    .stage canvas{
+      position:absolute;inset:0;width:100%;height:100%;
+      display:block;
+      touch-action:none; /* the page does not scroll, so a finger here is a tap */
+    }
+    .count{
+      position:absolute;inset:0;
+      display:grid;place-items:center;
+      font-size:var(--t-count);font-weight:300;
+      letter-spacing:-.02em;line-height:1;
+      font-variant-numeric:tabular-nums; /* the number must not shuffle as it counts */
+      color:var(--paper-ink);
+      pointer-events:none;
+    }
+    .count[hidden]{display:none}
+
+    .tray{
+      flex:none;
+      display:flex;flex-direction:column;align-items:center;gap:12px;
+      width:var(--col);margin:0 auto;
+    }
+    /* still.html's phase track, verbatim in shape: the words in a row, one thin
+       bar under them, filled across the phase that is running. */
+    .phase{
+      display:flex;flex-direction:column;align-items:stretch;gap:12px;
+      font-size:var(--t-small);
+      color:var(--paper-muted);
+    }
+    .phase-words{
+      display:flex;flex-wrap:wrap;justify-content:center;
+      gap:clamp(20px,6vw,var(--s4));
+    }
+    .phase-words span{transition:color var(--dur-scene) var(--ease-scene)}
+    .phase-words span.is-now{color:var(--paper-ink)}
+    /* The track spans the words rather than sitting at a fixed width under the
+       middle of them: a 132px bar under a four word row reads as an underline
+       on whichever word it happens to land beneath. */
+    .phase-track{width:100%;min-width:132px;height:2px;background:var(--paper-line)}
+    .phase-track i{
+      display:block;width:100%;height:100%;
+      background:var(--paper-ink);
+      transform:scaleX(0);transform-origin:left;
+    }
+    .cycle{font-size:var(--t-small);color:var(--paper-muted)}
+
+    .go{
+      appearance:none;background:none;
+      border:1px solid var(--paper-line);border-radius:2px;
+      margin:0;padding:9px 22px;
+      font:inherit;color:var(--paper-ink);cursor:pointer;
+      transition:border-color var(--dur-ui) var(--ease-ui);
+    }
+    .go:hover{border-color:var(--paper-ink)}
+
+    /* `back` leaves the guide for the menu. It is an action, not a destination,
+       so it is a button: browser-back would leave the page entirely. */
+    .linkish{
+      appearance:none;background:none;border:0;margin:0;padding:0;
+      font:inherit;font-size:var(--t-small);color:var(--paper-muted);cursor:pointer;
+      text-decoration:underline;text-underline-offset:3px;
+      transition:opacity var(--dur-ui) var(--ease-ui);
+    }
+    .linkish:hover{opacity:.6}
+    .linkish{position:relative}
+    .linkish::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+    .linkish{z-index:1}
+
+    :where(button,a):focus-visible{
+      outline:2px solid var(--paper-ink);
+      outline-offset:3px;
+    }
+
+    .sr{
+      position:absolute;width:1px;height:1px;
+      margin:-1px;padding:0;border:0;
+      overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      .glint{background-position:59% 0}
+      .layer,.list button,.phase-words span,.back,.go,.linkish{transition-duration:.01ms}
+    }
+:root{color-scheme:light;--paper:#E3E7DF;--paper-ink:#18211C;--paper-muted:#536059;--paper-line:#CBD2C7;--pill-fill:#CCDACB;--pill-ink:#2C5741;--pill-glint:rgba(255,255,255,.9);--disc:#4F6E5B;--disc-a:0.5}
+
+  :root{
+    --surface:#F4F6F1;      /* card, 1.1:1 on --paper; muted 6.06:1 on it */
+    --accent:#2C5741;       /* the one filled primary; white on it 8.25:1 */
+    --on-accent:#FFFFFF;
+    --accent-tint:#DCE5D9;  /* selected fill; accent ink 6.38:1, muted 5.1:1 on it */
+    --radius:8px;
+    --shadow-card:0 1px 2px rgba(24,33,28,.06),0 2px 8px -2px rgba(24,33,28,.08);
+  }
+  .type-page-title{font-size:32px;line-height:40px;font-weight:400;letter-spacing:-.01em;color:var(--paper-ink);margin:0}
+  .type-card-title{font-size:16px;line-height:24px;font-weight:600;color:var(--paper-ink)}
+  .type-body{font-size:14px;line-height:20px}
+  .type-meta{font-size:13px;line-height:18px;color:var(--paper-muted)}
+  .num{font-variant-numeric:tabular-nums}
+  .card{background:var(--surface);border:1px solid var(--paper-line);border-radius:var(--radius);box-shadow:var(--shadow-card)}
+
+  .btn{appearance:none;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+       height:36px;padding:0 16px;border-radius:var(--radius);border:1px solid transparent;
+       font:500 14px/1 var(--body);cursor:pointer;
+       transition:background-color var(--dur-ui) var(--ease-ui),border-color var(--dur-ui) var(--ease-ui),color var(--dur-ui) var(--ease-ui)}
+  .btn::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .btn-ghost{background:none;color:var(--paper-ink);padding:0 10px;margin-left:-10px}
+  .btn-ghost:hover{background:var(--accent-tint)}
+  .btn-ghost svg{width:16px;height:16px}
+
+  /* The phase words as a segmented row: the running phase takes the selected fill. */
+  .phase{gap:10px;width:100%}
+  .phase-words{gap:4px;flex-wrap:nowrap}
+  .phase-words span{flex:1;text-align:center;padding:6px 10px;border-radius:6px;font-size:13px;line-height:18px;
+       transition:background-color var(--dur-scene) var(--ease-scene),color var(--dur-scene) var(--ease-scene)}
+  .phase-words span.is-now{background:var(--accent-tint);color:var(--accent)}
+  .phase-track{height:4px;border-radius:2px;overflow:hidden}
+  .phase-track i{background:var(--accent)}
+  .cycle{font-variant-numeric:tabular-nums}
+
+  /* begin / end / again: the view's one filled primary */
+  .go{height:44px;width:100%;max-width:320px;border:0;border-radius:var(--radius);
+      background:var(--accent);color:var(--on-accent);font-weight:500;font-size:15px;padding:0 24px}
+  .go:hover{border:0;background:#24493A}
+  .tray{gap:16px;max-width:400px}
+  :where(button,a):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){.btn,.phase-words span{transition-duration:.01ms}}
+
+  #menu{display:none}
+  .layer{padding:16px 24px 24px}
+  #guide .mast{align-items:center}
+  #guide .mast-title{display:none}
+  .linkish{display:none}
+  .pick{width:var(--col);margin:24px auto 0;display:flex;flex-direction:column;gap:16px}
+  .seg{display:flex;padding:3px;gap:3px;border:1px solid var(--paper-line);border-radius:var(--radius);background:var(--surface)}
+  .seg button{appearance:none;position:relative;flex:1;height:36px;border:0;border-radius:6px;background:none;
+       font:500 14px/1 var(--body);color:var(--paper-muted);cursor:pointer;
+       transition:background-color var(--dur-ui) var(--ease-ui),color var(--dur-ui) var(--ease-ui)}
+  .seg button::after{content:"";position:absolute;left:0;right:0;top:50%;height:44px;transform:translateY(-50%)}
+  .seg button:hover{color:var(--paper-ink)}
+  .seg button[aria-selected="true"]{background:var(--accent-tint);color:var(--accent)}
+  .facts{display:flex;flex-direction:column;gap:8px}
+  .facts .top{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+  .facts .top .num{flex:none;white-space:nowrap} /* the time on one line on a phone; the description takes the wrap */
+  .facts .row-pill{padding:0}
+  .facts a{color:var(--paper-ink);text-underline-offset:2px}
+  .stage{margin:8px 0}
+  #guide .mast .back{order:-1}
+  @media (prefers-reduced-motion:reduce){.seg button{transition-duration:.01ms}}
+  
+  </style>
+</head>
+<body>
+
+  <main>
+    <section class="layer is-on" id="menu" aria-label="breathing exercises">
+      <header class="mast">
+        <div>
+          <p class="mast-title">breathing exercises</p>
+        </div>
+        <p class="mast-me">levi adissi</p>
+      </header>
+      <div class="list" id="list" role="group" aria-label="pick an exercise"></div>
+      <footer class="foot"><a class="back" href="./">back to the site</a></footer>
+    </section>
+
+    <section class="layer" id="guide" aria-label="guide" inert>
+      <header class="mast">
+        <p class="mast-title" id="exName">breathing exercises</p>
+        <p class="mast-me">levi adissi</p>
+        <button type="button" class="linkish" id="back">back</button>
+        <a class="back type-meta" href="./">back to the site</a>
+      </header>
+      <div class="pick">
+        <h1 class="type-page-title">breathing exercises</h1>
+        <div class="seg" role="tablist" aria-label="pick an exercise" id="seg"></div>
+        <div class="facts" id="facts"></div>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="disc" aria-hidden="true"></canvas>
+        <p class="count" id="count" aria-hidden="true" hidden></p>
+      </div>
+      <div class="tray">
+        <div class="phase" aria-hidden="true">
+          <div class="phase-words" id="words"></div>
+          <div class="phase-track"><i id="fill"></i></div>
+        </div>
+        <p class="cycle" id="cycle" aria-hidden="true"></p>
+        <button type="button" class="go" id="go">begin</button>
+      </div>
+      <p class="sr" role="status" id="say"></p>
+    </section>
+  </main>
+
+  <script type="module">
+    "use strict";
+
+    /* ---------- shared ---------- */
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const mqRM = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const smooth = k => k * k * (3 - 2 * k);
+    // Exponential approach, frame-rate independent.
+    const approach = (dt, rate) => 1 - Math.exp(-dt * rate);
+
+    // The disc is painted on a canvas, so it cannot inherit a custom property.
+    // It reads the token once rather than carrying a second copy of the value,
+    // which is the rule that keeps a hued literal from creeping in sideways.
+    function rgbOf(name) {
+      const hex = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(",");
+    }
+    const INK = rgbOf("--disc"); const DA = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--disc-a"));
+
+    /* ---------- the exercises ---------- */
+
+    // Every exercise is data. There is one engine below and no per-exercise
+    // animation code, which is what lets the physiological sigh exist at all:
+    // it is not an in-hold-out template with an exception bolted on, it is a
+    // three phase cycle whose second phase happens to be another inhale.
+    //
+    // `disc` is where that phase ENDS, 0 empty to 1 full. A phase eases from
+    // wherever the phase before it left the disc, so a hold is simply a phase
+    // that ends where the last one did, and the sigh's top-up is a phase that
+    // starts at 0.85 and ends at 1.
+    const EXERCISES = [
+      {
+        slug: "box",
+        name: "box breathing",
+        line: "four in, four hold, four out, four hold.",
+        pill: { name: "mood enhancing", effect: "mood up 5% of the scale per 5 min dose." },
+        cycles: 4,
+        phases: [
+          { label: "in",   seconds: 4, disc: 1 },
+          { label: "hold", seconds: 4, disc: 1 },
+          { label: "out",  seconds: 4, disc: 0 },
+          { label: "hold", seconds: 4, disc: 0 },
+        ],
+      },
+      {
+        slug: "sigh",
+        name: "physiological sigh",
+        line: "a second breath in on top of a full one, then a long breath out.",
+        pill: { name: "stress reducing", effect: "anxiety down 6% of the scale per 5 min dose." },
+        cycles: 3,
+        phases: [
+          { label: "in",       seconds: 2.5, disc: 0.85 },
+          { label: "in again", seconds: 1,   disc: 1 },
+          { label: "out",      seconds: 6,   disc: 0 },
+        ],
+      },
+    ];
+
+    const cycleSeconds = ex => ex.phases.reduce((s, p) => s + p.seconds, 0);
+    const totalSeconds = ex => cycleSeconds(ex) * ex.cycles;
+    function human(sec) {
+      const s = Math.round(sec);
+      return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+    }
+
+    /* ---------- elements ---------- */
+
+    const menuEl = document.getElementById("menu");
+    const guideEl = document.getElementById("guide");
+    const listEl = document.getElementById("list");
+    const nameEl = document.getElementById("exName");
+    const wordsEl = document.getElementById("words");
+    const fillEl = document.getElementById("fill");
+    const cycleEl = document.getElementById("cycle");
+    const countEl = document.getElementById("count");
+    const goEl = document.getElementById("go");
+    const backEl = document.getElementById("back");
+    const stageEl = document.getElementById("stage");
+    const sayEl = document.getElementById("say");
+    const canvas = document.getElementById("disc");
+    const ctx = canvas.getContext("2d");
+
+    // A press arms on pointerdown, not on click. A click on a touch screen is
+    // the browser's opinion about what you meant several hundred milliseconds
+    // later, and the first thing anyone does with `begin` is stab it. The click
+    // path stays for the keyboard, where there is no pointerdown to arm on.
+    function press(el, fn) {
+      let armed = false, t = 0;
+      el.addEventListener("pointerdown", e => {
+        if (e.isPrimary === false) return;
+        armed = true;
+        clearTimeout(t);
+        // A pointerdown that never becomes a click (a finger dragged off the
+        // control) must not swallow the next keyboard press.
+        t = setTimeout(() => { armed = false; }, 800);
+        fn();
+      });
+      el.addEventListener("click", () => {
+        if (armed) { armed = false; clearTimeout(t); return; }
+        fn();
+      });
+    }
+
+    /* ---------- menu ---------- */
+
+    // Built from the data, so a row can never advertise a length the engine
+    // does not run.
+    for (const ex of EXERCISES) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.ex = ex.slug;
+      const top = document.createElement("span");
+      top.className = "row-top";
+      const n = document.createElement("span");
+      n.className = "row-name";
+      n.textContent = ex.name;
+      const t = document.createElement("span");
+      t.className = "row-time";
+      t.textContent = `${ex.cycles} cycles, ${human(totalSeconds(ex))}`;
+      top.append(n, t);
+      const line = document.createElement("span");
+      line.className = "row-line";
+      line.textContent = ex.line;
+      const pill = document.createElement("p");
+      pill.className = "row-pill";
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.dataset.slot = "badge";
+      const glint = document.createElement("span");
+      glint.className = "glint";
+      glint.setAttribute("aria-hidden", "true");
+      const word = document.createElement("span");
+      word.className = "badge-word";
+      word.textContent = ex.pill.name;
+      badge.append(glint, word);
+      for (const el of [b, pill]) {
+        el.addEventListener("pointerenter", () => sweep(glint));
+        el.addEventListener("pointerdown", () => sweep(glint));
+        el.addEventListener("focusin", () => sweep(glint));
+      }
+      const effect = document.createElement("span");
+      const cite = document.createElement("a");
+      cite.href = "https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/";
+      cite.textContent = "balban et al. 2023";
+      effect.append(`${ex.pill.effect} `, cite, ".");
+      pill.append(badge, effect);
+      b.append(top, line);
+      b.addEventListener("click", () => open(ex));
+      listEl.append(b, pill);
+    }
+
+    // The pill glint. One sweep is 1.2s; on its own the pills take turns every 2s. The turn is skipped while the
+    // menu is not the layer showing, the list is out of view, or the tab is hidden, and nothing moves at all under
+    // reduced motion (the CSS holds the glint still as a gloss).
+    const GLINT_MS = 1200, GLINT_TURN = 2000;
+    function sweep(g) {
+      if (mqRM.matches || (g.sweeping && g.sweeping.playState === "running")) return;
+      g.sweeping = g.animate([{ backgroundPosition: "100% 0" }, { backgroundPosition: "0% 0" }],
+        { duration: GLINT_MS, easing: "ease-in-out" });
+    }
+    let glintTurn = 0, listSeen = false;
+    new IntersectionObserver(es => { listSeen = es[es.length - 1].isIntersecting; }).observe(listEl);
+    setInterval(() => {
+      if (!listSeen || document.hidden || !menuEl.classList.contains("is-on")) return;
+      const gs = listEl.querySelectorAll(".glint");
+      if (gs.length) sweep(gs[glintTurn++ % gs.length]);
+    }, GLINT_TURN);
+
+    /* ---------- the engine ---------- */
+
+    let ex = null;
+    let running = false, done = false;
+    let t0 = 0, phaseIdx = -1, cycleIdx = 0;
+    let discCur = 0, fillCur = 0;
+    let frames = 0, ticks = 0;      // rAF frames, and reduced-motion ticks
+    let raf = 0, rmT = 0, lastNow = 0;
+    let cycleMarks = [], phaseMarks = [];
+    let spans = [];
+
+    // Where the run is at `el` seconds: which cycle, which phase, and how far
+    // into it. Everything on screen is derived from this and from one
+    // performance.now() origin, so the disc and the bar cannot drift apart and
+    // neither can drift from the wall clock.
+    function locate(el) {
+      const cs = cycleSeconds(ex);
+      if (el >= cs * ex.cycles) return null;         // the run is over
+      const cycle = Math.floor(el / cs);
+      let t = el - cycle * cs;
+      for (let i = 0; i < ex.phases.length; i++) {
+        const p = ex.phases[i];
+        if (t < p.seconds || i === ex.phases.length - 1) {
+          return { cycle, i, p, t: Math.min(t, p.seconds) };
+        }
+        t -= p.seconds;
+      }
+      return null;
+    }
+    // A phase eases from wherever the previous one left the disc. The first
+    // phase of a cycle follows the last phase of the one before it, which is
+    // also the rest value at the start of a run.
+    function discAt(loc) {
+      const ph = ex.phases;
+      const from = loc.i === 0 ? ph[ph.length - 1].disc : ph[loc.i - 1].disc;
+      return from + (loc.p.disc - from) * smooth(loc.t / loc.p.seconds);
+    }
+
+    function setPhase(loc) {
+      if (loc.i !== phaseIdx || loc.cycle !== cycleIdx) {
+        if (loc.cycle !== cycleIdx || phaseIdx < 0) {
+          cycleIdx = loc.cycle;
+          cycleMarks.push(performance.now());
+        }
+        phaseIdx = loc.i;
+        phaseMarks.push(performance.now());
+        for (let i = 0; i < spans.length; i++) spans[i].classList.toggle("is-now", i === loc.i);
+        // Label only, once per phase. The countdown is not announced: a screen
+        // reader reciting "three, two, one" over a breath is noise.
+        sayEl.textContent = loc.p.label;
+        cycleEl.textContent = `cycle ${loc.cycle + 1} of ${ex.cycles}`;
+      }
+    }
+    function setFill(v) {
+      fillCur = v;
+      fillEl.style.transform = `scaleX(${v})`;
+    }
+
+    /* ---------- the disc ---------- */
+
+    let w = 0, h = 0;
+    function fitCanvas() {
+      const r = canvas.getBoundingClientRect();
+      w = r.width; h = r.height;
+      const cw = Math.round(w * DPR), ch = Math.round(h * DPR);
+      if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    // One soft disc, sized off the stage's own box so it can never reach the
+    // masthead or the tray at any phase of any exercise.
+    //
+    // The falloff is short on purpose. A gradient that fades from the centre
+    // all the way out has no edge at all: it reads as fog rather than as
+    // something breathing, and at 1440 it filled two thirds of the screen
+    // without ever being a shape. So the body is a flat wash out to 84% of the
+    // radius and the last 16% is the edge.
+    function drawDisc(v) {
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      const r = Math.min(w, h) * 0.30 * (0.55 + 0.45 * v);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, `rgba(${INK},${DA})`);
+      g.addColorStop(0.84, `rgba(${INK},${DA})`);
+      g.addColorStop(0.94, `rgba(${INK},${DA*0.6})`);
+      g.addColorStop(1, `rgba(${INK},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ---------- the two drivers ---------- */
+
+    // Motion: one rAF loop, and it exists only while there is something to
+    // move. At rest nothing is scheduled.
+    function loop(now) {
+      frames++;
+      const dt = Math.min(0.05, (now - lastNow) / 1000 || 0.016);
+      lastNow = now;
+      if (running) {
+        // Clamped at zero: a rAF timestamp is the time the frame STARTED, which
+        // can precede the click that set the origin by a millisecond or two. A
+        // negative elapsed walks locate() backwards into the previous cycle, so
+        // the run would open by announcing the last phase for one frame and
+        // would count a cycle boundary that never happened.
+        const loc = locate(Math.max(0, (now - t0) / 1000));
+        if (!loc) { settle(); }
+        else {
+          setPhase(loc);
+          setFill(loc.t / loc.p.seconds);
+          discCur = discAt(loc);
+        }
+      } else {
+        // A run stopped by hand lets the disc come back down rather than
+        // dropping it.
+        discCur += (0 - discCur) * approach(dt, 6);
+      }
+      drawDisc(discCur);
+      if (running || discCur > 0.002) raf = requestAnimationFrame(loop);
+      else { raf = 0; discCur = 0; drawDisc(0); }
+    }
+
+    // Reduced motion: no rAF at all, and no smooth clock. The phase label, a
+    // whole-second countdown, and a bar that steps once a second. Each tick is
+    // scheduled against the run's single origin rather than against the last
+    // tick, so an early or late timer cannot accumulate.
+    function rmTick() {
+      ticks++;
+      const el = (performance.now() - t0) / 1000;
+      const loc = locate(el);
+      if (!loc) { settle(); return; }
+      setPhase(loc);
+      setFill(Math.min(1, Math.floor(loc.t + 1e-6) / loc.p.seconds));
+      countEl.textContent = String(Math.max(1, Math.ceil(loc.p.seconds - loc.t - 1e-6)));
+      const next = Math.min(Math.floor(loc.t + 1e-6) + 1, loc.p.seconds);
+      rmT = setTimeout(rmTick, Math.max(30, (next - loc.t) * 1000));
+    }
+
+    /* ---------- begin, end, again ---------- */
+
+    function begin() {
+      if (running) return;
+      stopDrivers();
+      running = true; done = false;
+      t0 = performance.now();
+      lastNow = t0;
+      phaseIdx = -1; cycleIdx = 0;
+      cycleMarks = []; phaseMarks = [];
+      goEl.textContent = "end";
+      if (mqRM.matches) {
+        countEl.hidden = false;
+        rmTick();
+      } else {
+        countEl.hidden = true;
+        raf = requestAnimationFrame(loop);
+      }
+    }
+    // Both the hand-stopped end and the finished end land here. The difference
+    // is only what the button offers next.
+    function stop(finished) {
+      if (!running) return;
+      running = false;
+      done = !!finished;
+      stopDrivers();
+      for (const s of spans) s.classList.remove("is-now");
+      setFill(0);
+      sayEl.textContent = finished ? "done" : "stopped";
+      goEl.textContent = finished ? "again" : "begin";
+      cycleEl.textContent = finished
+        ? `${ex.cycles} cycles, done`
+        : `${ex.cycles} cycles, ${human(totalSeconds(ex))}`;
+      countEl.hidden = true;
+      countEl.textContent = "";
+      if (mqRM.matches) { discCur = 0; drawDisc(0); }
+      else { lastNow = performance.now(); raf = requestAnimationFrame(loop); }
+    }
+    const settle = () => stop(true);
+    function stopDrivers() {
+      cancelAnimationFrame(raf); raf = 0;
+      clearTimeout(rmT); rmT = 0;
+    }
+
+    /* ---------- the two screens ---------- */
+
+    let onGuide = false, opener = null, booted = false;
+
+    function open(next) {
+      ex = next;
+      opener = listEl.querySelector(`[data-ex="${next.slug}"]`);
+      nameEl.textContent = next.name;
+      wordsEl.textContent = "";
+      spans = next.phases.map(p => {
+        const s = document.createElement("span");
+        s.textContent = p.label;
+        wordsEl.append(s);
+        return s;
+      });
+      running = false; done = false;
+      stopDrivers();
+      phaseIdx = -1; cycleIdx = 0;
+      cycleMarks = []; phaseMarks = [];
+      setFill(0);
+      goEl.textContent = "begin";
+      cycleEl.textContent = `${next.cycles} cycles, ${human(totalSeconds(next))}`;
+      countEl.hidden = true; countEl.textContent = "";
+      sayEl.textContent = "";
+      onGuide = true;
+      menuEl.classList.remove("is-on"); menuEl.inert = true;
+      guideEl.classList.add("is-on"); guideEl.inert = false;
+      // Nothing autoplays. The guide opens at rest with one word on it, and
+      // focus goes to that word so a keyboard lands where a finger would.
+      if (booted) goEl.focus();
+      requestAnimationFrame(() => { fitCanvas(); discCur = 0; drawDisc(0); });
+    }
+    function toMenu() {
+      stop(false);
+      running = false;
+      stopDrivers();
+      discCur = 0;
+      onGuide = false;
+      guideEl.classList.remove("is-on"); guideEl.inert = true;
+      menuEl.classList.add("is-on"); menuEl.inert = false;
+      if (opener) opener.focus();
+    }
+
+    press(goEl, () => { if (running) stop(false); else begin(); });
+    backEl.addEventListener("click", toMenu);
+    // Tap again anywhere on the stage to stop. It only ever stops: starting is
+    // the one thing that has to be deliberate.
+    stageEl.addEventListener("pointerdown", () => { if (running) stop(false); });
+
+    /* ---------- boot ---------- */
+
+    function resize() {
+      fitCanvas();
+      if (!running || mqRM.matches) drawDisc(discCur);
+    }
+    window.addEventListener("resize", resize);
+    // The stage changes size with no window resize: the web font rewraps the
+    // copy above it after boot. A stale canvas draws the disc as an oval.
+    new ResizeObserver(resize).observe(canvas);
+
+    function setMode() {
+      if (!running) { stopDrivers(); drawDisc(discCur); return; }
+      // Switching the OS toggle mid-run keeps the run: the origin does not
+      // move, only which driver is reading it.
+      stopDrivers();
+      if (mqRM.matches) { countEl.hidden = false; rmTick(); }
+      else { countEl.hidden = true; lastNow = performance.now(); raf = requestAnimationFrame(loop); }
+    }
+    mqRM.addEventListener("change", setMode);
+
+    fitCanvas();
+    drawDisc(0);
+
+    // B and C: one screen. The picker calls the page's own open(); the facts
+    // block shows the picked exercise's menu row, moved, not re-written.
+    const segEl = document.getElementById("seg");
+    const factsEl = document.getElementById("facts");
+    const rowOf = slug => {
+      const b = listEl.querySelector(`[data-ex="${slug}"]`);
+      return { b, pill: b.nextElementSibling };
+    };
+    function pick(next) {
+      if (running) stop(false);
+      open(next);
+      for (const t of segEl.children) t.setAttribute("aria-selected", String(t.dataset.ex === next.slug));
+      if (factsEl) {
+        const { b, pill } = rowOf(next.slug);
+        factsEl.innerHTML = "";
+        const top = document.createElement("div");
+        top.className = "top";
+        const line = b.querySelector(".row-line").cloneNode(true);
+        line.className = "type-body";
+        line.style.color = "var(--paper-muted)";
+        const time = b.querySelector(".row-time").cloneNode(true);
+        time.className = "type-meta num";
+        top.append(line, time);
+        const p = pill.cloneNode(true);
+        p.querySelectorAll(".glint").forEach(g => g.remove());
+        factsEl.append(top, p);
+      }
+    }
+    for (const e of EXERCISES) {
+      const t = document.createElement("button");
+      t.type = "button";
+      t.setAttribute("role", "tab");
+      t.dataset.ex = e.slug;
+      t.textContent = e.name;
+      t.addEventListener("click", () => pick(e));
+      segEl.append(t);
+    }
+    pick(EXERCISES[0]);
+    booted = true;
+
+
+    // The probe surface, in the shape form.html already uses: enough to assert
+    // on from the outside, nothing the page itself reads, and no way to drive
+    // the page from it.
+    window.__breathe = () => ({
+      screen: onGuide ? "guide" : "menu",
+      ex: ex ? ex.slug : null,
+      running, done, rm: mqRM.matches,
+      frames, ticks,
+      elapsed: running ? +((performance.now() - t0) / 1000).toFixed(3) : 0,
+      cycle: cycleIdx, phase: phaseIdx,
+      label: phaseIdx >= 0 && ex ? ex.phases[phaseIdx].label : null,
+      disc: +discCur.toFixed(4),
+      fill: +fillCur.toFixed(4),
+      count: countEl.hidden ? null : countEl.textContent,
+      say: sayEl.textContent,
+      go: goEl.textContent,
+      cycleSeconds: ex ? cycleSeconds(ex) : 0,
+      totalSeconds: ex ? totalSeconds(ex) : 0,
+      cycleMarks: cycleMarks.map(m => +m.toFixed(3)),
+      phaseMarks: phaseMarks.map(m => +m.toFixed(3)),
+    });
+    window.__breatheReady = true;
+  </script>
+</body>
+</html>

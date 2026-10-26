@@ -1,0 +1,130 @@
+/* The home page's type, rhythm and layout A (Levi's pick 10-25, fa006f11), on kit tokens only, linked after kit.css
+   and motion.css. kit.css (with page.css inside it) stays byte for byte as work-cards 9244787 has it, so every change
+   here is an override. Taken from home-layouts-mock 0fcbaa4: its mocks.css first, then its a.css.
+
+   Type and rhythm follow RESEARCH/PERSONAL_SITE_TYPE_AND_SECTION_SPEC.md, parts 3 and 4 (Maecenas, accepted by Agrippa
+   aa6b7b31, applied for cb9dfcf6). Seven roles in Inter, two weights, and tracking only from 18px up, at Inter's own
+   values. Spaces come in four tiers, 1440 / phone: page edge to the name 96 / 64, intro to the first section 96 / 80,
+   sections 80 / 64 apart, a label 24 / 16 above its content. "Phone" is under 640px, the page's own breakpoint. */
+
+/* Dark grey a clear step below ink: 6.52:1 on the page and 5.94:1 on a card, against ink's 15.69:1 (spec part 3). */
+.dark { --muted-foreground: #8e98ab; }
+
+/* The ramp. */
+.intro h1 { letter-spacing: -0.022em; }                                              /* name 32/40/400 */
+.intro > p {                                                                          /* lede */
+  font-size: 1.125rem; line-height: 1.75rem; font-weight: 400; letter-spacing: -0.014em;
+  color: var(--muted-foreground); max-width: 65ch;
+}
+.section > h2.type-section-title {                                                     /* label */
+  font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; letter-spacing: 0; color: var(--muted-foreground);
+}
+[data-slot=card-title] { font-size: 1rem; line-height: 1.5rem; font-weight: 500; }  /* title */
+[data-slot=card-description] { font-size: 0.875rem; line-height: 1.25rem; font-weight: 400; }   /* meta */
+.awards li, .about-text p { font-size: 1rem; line-height: 1.5rem; font-weight: 400; } /* body */
+
+/* Project and exploration cards: 24 around the words on a wide screen, 16 on a phone. */
+@media (min-width: 640px) {
+  main [data-slot=card] { --card-spacing: 24px; }
+}
+
+/* The case study link: meta, its underline in the grey so it can be seen (it was --border, 1.3:1). */
+.case-link { text-decoration-color: var(--muted-foreground); }
+.case-link:hover { text-decoration-color: var(--foreground); }
+
+/* Page edge, sections apart, label to content. The intro's extra 16 comes from the kit's main > .intro + section. */
+main { padding-block: 96px; gap: 80px; }
+.section { gap: 24px; }
+
+/* The logo strip spans its column, at least 40 between marks. */
+.logos { justify-content: space-between; gap: 24px 40px; }
+
+/* The testimonial: a section of its own under its label, the mark, the words at 24/32, then who said it. */
+.testimonial .quote { border-inline-start: 0; padding-inline-start: 0; gap: 16px; max-width: none; }
+.quote-mark { width: 24px; height: 18px; color: var(--muted-foreground); }
+.testimonial blockquote p {
+  font-size: 1.5rem; line-height: 2rem; font-weight: 400; letter-spacing: -0.02em;
+  color: var(--foreground); max-width: 30em; text-wrap: balance;
+}
+.testimonial figcaption { margin-block-start: 8px; font-size: 0.875rem; line-height: 1.25rem; color: var(--muted-foreground); }
+.testimonial figcaption .who { font-weight: 500; color: var(--foreground); }
+
+/* Awards: rows 16 apart. */
+.awards { gap: 16px; }
+
+/* The footer: a rule across the column, then its contents 24 under it. The toggle's own box is 44 tall. */
+main > footer.contact { border-block-start: 1px solid var(--border); padding-block-start: 24px; }
+.contact .mode { min-height: 44px; }
+
+@media (max-width: 639px) {
+  main { padding-block: 64px; gap: 64px; }
+  .section { gap: 16px; }
+  .intro > p { font-size: 1rem; line-height: 1.5rem; letter-spacing: 0; }
+  .logos { justify-content: flex-start; gap: 24px 32px; }
+  .testimonial blockquote p { font-size: 1.25rem; line-height: 1.75rem; letter-spacing: -0.017em; }
+  .testimonial figcaption { margin-block-start: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* A. Split. From 1200px the name, the intro, the contact and the section list stay pinned in a left column while the
+   work scrolls on the right. Below 1200px it is one column, today's order. Reference: brittanychiang.com.
+   Spaces from the spec (mocks.css): sections 80 apart (64 on a phone), the contact 24 under the intro, and the first
+   section 96 under the contact (80 on a phone), which is main's gap and 16 more. */
+
+.rail { display: flex; flex-direction: column; gap: 24px; }
+.rail-nav { display: none; }
+.rail-body { display: flex; flex-direction: column; gap: 80px; }
+.rail + .rail-body { margin-block-start: 16px; }
+.rail .contact { justify-content: flex-start; }
+
+@media (max-width: 639px) {
+  .rail-body { gap: 64px; }
+}
+
+@media (min-width: 1200px) {
+  body.layout-a main {
+    width: min(1280px, 100%);
+    padding: 0 48px;
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 0 80px;
+    align-items: start;
+  }
+  .rail {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding: 96px 0 48px;
+    gap: 32px;
+  }
+  .rail + .rail-body { margin-block-start: 0; }
+  .rail .intro p { max-width: none; }
+  .rail .contact { margin-block-start: auto; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rail-body { padding: 96px 0; }
+
+  .rail-nav { display: flex; flex-direction: column; }
+  .rail-nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    font: var(--type-body);
+    transition: color 150ms ease-out;
+  }
+  /* A short line before each entry that grows on the one in view. */
+  .rail-nav a::before {
+    content: "";
+    width: 16px;
+    height: 1px;
+    background: currentColor;
+    transition: width 150ms ease-out;
+  }
+  .rail-nav a:hover, .rail-nav a[aria-current] { color: var(--foreground); }
+  .rail-nav a[aria-current]::before { width: 40px; }
+}
