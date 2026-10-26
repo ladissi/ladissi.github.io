@@ -68,3 +68,9 @@ a[data-slot=card].has-ambient > img:is(.phone, .screen) { background: transparen
   .has-ambient > .motion-ambient, .motion-glow, .motion-glow.is-live { display: none; }
   a[data-slot=card].has-ambient > img:is(.phone, .screen) { background: var(--muted); }
 }
+/* Except the still scene: under reduced motion it shows one settled frame painted on its canvas (motion.js), since the
+   picture scaled down to the card loses its line's light. Last in the file and three classes, so it outranks the
+   hiding rule above. */
+@media (prefers-reduced-motion: reduce) {
+  .motion-loop.motion-scene.is-settled { opacity: 1; }
+}

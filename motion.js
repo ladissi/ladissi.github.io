@@ -219,8 +219,9 @@ class Attention {
 
 async function still(card) {
   const img = card.querySelector("img");
-  // Under reduced motion nothing is fetched: the card's own picture is the still, the line formed.
-  while (mqRM.matches) await new Promise((r) => mqRM.addEventListener("change", r, { once: true }));
+  // Under reduced motion the card paints one settled frame, the line formed, and holds it: no gather, no pointer and no
+  // glow. The picture is the still until then. Scaled down to the card, the picture's thin glyphs lose most of their
+  // light (the line peaks at 254 in still-1120.webp and paints about 99 at 1x), and the drawn points keep it.
   const FW = 1280, FH = 800;                 // still.html's frame, as tools/shots.mjs shoots it
   const face = new FontFace("Aspekta", `url(${ASPEKTA}) format("woff2")`, { weight: "100 900" });
   const [src] = await Promise.all([loadImage("img/still-1120.webp"), face.load().then((f) => document.fonts.add(f)).catch(() => {})]);
@@ -259,11 +260,13 @@ async function still(card) {
   const scene = new Attention(FW, FH);
   scene.ctx = g;
   scene.onResize();
+  let settled = false;
   const place = () => {
     box.style.top = img.offsetTop + "px";
     box.style.left = img.offsetLeft + "px";
     box.style.width = img.offsetWidth + "px";
     box.style.height = img.offsetHeight + "px";
+    if (settled) settle();
   };
   new ResizeObserver(place).observe(img);
   place();
@@ -277,14 +280,24 @@ async function still(card) {
   card.addEventListener("pointerleave", () => { scene.px = scene.py = -1e4; });
   const GATHER = 3.2;                        // seconds from scattered to the line; then it holds
   let t = 0;
-  function paint(dt) {
+  function frame(k, interactive) {
     const W = win.offsetWidth, H = win.offsetHeight;
     const w = Math.round(W * DPR), h = Math.round(H * DPR);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     g.setTransform(w / FW, 0, 0, h / FH, 0, 0);
-    scene.draw(Math.min(1, t / GATHER), true);
+    scene.draw(k, interactive);
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.drawImage(copy, 0, 0, w, h);
+    return [W, H, w, h];
+  }
+  // The settled frame: every point on the line, no pointer, painted once (and again only if the card is resized).
+  function settle() {
+    frame(1, false);
+    settled = true;
+    box.classList.add("is-settled");
+  }
+  function paint(dt) {
+    const [W, H, w, h] = frame(Math.min(1, t / GATHER), true);
     // In both themes the frame runs edge to edge, like the 3D and breathing cards' pictures (Levi 10-25 b10e5c45), and
     // the glow lifts the scene's own ground under the points.
     gl.place(0, 0, W, H, 1, 1, box.offsetWidth * 0.06);
@@ -292,9 +305,12 @@ async function still(card) {
   }
   register({
     card,
-    frame(now, dt) { t += dt; paint(dt); box.classList.add("is-live"); gl.wrap.classList.add("is-live"); },
-    // Off screen or in a hidden tab it keeps its place; under reduced motion the card's own picture is the still.
-    still() { if (mqRM.matches) { box.classList.remove("is-live"); gl.wrap.classList.remove("is-live"); } },
+    frame(now, dt) {
+      if (settled) { settled = false; box.classList.remove("is-settled"); }
+      t += dt; paint(dt); box.classList.add("is-live"); gl.wrap.classList.add("is-live");
+    },
+    // Off screen or in a hidden tab it keeps its place; under reduced motion it holds the settled frame, with no glow.
+    still() { if (mqRM.matches) { box.classList.remove("is-live"); gl.wrap.classList.remove("is-live"); settle(); } },
   });
 }
 
@@ -767,19 +783,49 @@ function videoLoop(card, opts) {
   };
   new ResizeObserver(place).observe(img);
   place();
+  // Ambient, on the recording's own ground beside the promo: a soft copy of the promo's frame playing right now, cut
+  // out where the frame sits (opts.frame, a fixed box in the video's pixels), so it lights the side bands and never the
+  // frame. The ground is the promo's own #0a0a0a in both themes, so both take the dark plate's path, which adds the
+  // frame's colour and light; the light plate's path multiplies into the plate and cannot show on a near-black one.
+  // Made on the first live frame, so under reduced motion there is no glow at all.
+  const ground = [10, 10, 10];
+  let gl = null, armed = false, lastAt = 0;
+  function ambient() {
+    const q = opts.frame;
+    if (!gl || !q || !v.videoWidth) return;
+    const W = box.offsetWidth, H = box.offsetHeight, s = Math.max(W / q.w, H / q.h);   // object-fit: cover
+    const ox = (W - q.w * s) / 2, oy = (H - q.h * s) / 2;
+    const x = ox + q.x0 * s, y = oy + q.y0 * s, w = (q.x1 - q.x0) * s, h = (q.y1 - q.y0) * s;
+    const now = performance.now(), dt = Math.min(0.1, Math.max(0, (now - lastAt) / 1000));
+    lastAt = now;
+    const vs = v.videoWidth / q.w;
+    // Phone Zero's placement around its phone, the other portrait object on a plate.
+    gl.place(x, y, w, h, 1.75, 1.1, w * 0.24);
+    gl.draw(v, q.x0 * vs, q.y0 * vs, (q.x1 - q.x0) * vs, (q.y1 - q.y0) * vs, ground, true, dt);
+    const f = (n) => n.toFixed(1);
+    gl.wrap.style.clipPath = `path(evenodd, "M0 0H${f(W)}V${f(H)}H0Z M${f(x)} ${f(y)}H${f(x + w)}V${f(y + h)}H${f(x)}Z")`;
+    gl.wrap.classList.add("is-live");
+  }
+  // One callback chain per presented frame, and only while the card wants to play; it never doubles on a restart.
+  const onVideoFrame = () => { armed = false; if (!wanted) return; ambient(); arm(); };
+  const arm = () => { if (armed || !("requestVideoFrameCallback" in v)) return; armed = true; v.requestVideoFrameCallback(onVideoFrame); };
   let wanted = false;
   return {
     card,
     frame() {
-      if (wanted) return;
-      wanted = true;
-      if (v.preload === "none") v.preload = "auto";
-      v.play().then(() => box.classList.add("is-live")).catch(() => { wanted = false; });
+      if (!wanted) {
+        wanted = true;
+        if (v.preload === "none") v.preload = "auto";
+        v.play().then(() => box.classList.add("is-live")).catch(() => { wanted = false; });
+        if (opts.frame && !gl) gl = glow(box);
+        arm();
+      }
+      if (!("requestVideoFrameCallback" in v) && !v.paused) ambient();
     },
     still() {
       wanted = false;
       v.pause();
-      if (mqRM.matches) { v.currentTime = 0; box.classList.remove("is-live"); }
+      if (mqRM.matches) { v.currentTime = 0; box.classList.remove("is-live"); if (gl) gl.wrap.classList.remove("is-live"); }
     },
   };
 }
@@ -789,7 +835,12 @@ async function nanolearner(card) {
   // loop of four steps with its own cursor and taps, recorded in real time by tools/nanolearner_promo.mjs and laid on
   // its own dark ground at 16:10. The card's picture is the promo's own reduced-motion still. The promo has no light
   // version, so both themes show it as it is.
-  register(videoLoop(card, { src: "img/motion/nanolearner-promo.mp4" }));
+  register(videoLoop(card, {
+    src: "img/motion/nanolearner-promo.mp4",
+    // The promo's frame in the 960 by 600 mp4: its 458 by 570 portrait box, centred (the recording json's out.inner),
+    // which is also where the still's lighter box runs, x 502 to 1417 and y 30 to 1169 of its 1920 by 1200 pixels.
+    frame: { w: 960, h: 600, x0: 251, y0: 15, x1: 709, y1: 585 },
+  }));
 }
 
 /* ---------- boot ---------- */
