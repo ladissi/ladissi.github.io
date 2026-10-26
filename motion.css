@@ -74,3 +74,17 @@ a[data-slot=card].has-ambient > img:is(.phone, .screen) { background: transparen
 @media (prefers-reduced-motion: reduce) {
   .motion-loop.motion-scene.is-settled { opacity: 1; }
 }
+/* Until that frame is painted, the card shows the scene's own dark ground, not the picture: the frame's points are
+   Aspekta's glyphs, so it waits for that face and for still-1120.webp, and the picture scaled to the card paints its line
+   at about 3:1. The ground is the settled frame's (motion.js, still.html --night), in both themes and from first paint,
+   so light theme shows one dark tile, not the card's white and then the frame. It sits under the picture's box (16:10,
+   as the kit draws it) and under the picture itself, so the picture covers it again if the scene fails. Only with
+   scripting, so the picture stays the still with no script. */
+@media (prefers-reduced-motion: reduce) and (scripting: enabled) {
+  a[data-slot=card][href="still.html"] { position: relative; isolation: isolate; }
+  a[data-slot=card][href="still.html"]::before {
+    content: ""; position: absolute; z-index: -1; top: 0; left: 0; width: 100%; aspect-ratio: 16 / 10;
+    background: rgb(10, 10, 10);
+  }
+  a[data-slot=card][href="still.html"]:not([data-motion=failed]) > img { opacity: 0; }
+}
