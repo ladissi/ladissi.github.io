@@ -152,6 +152,15 @@
       pointer-events:none;
     }
     .count[hidden]{display:none}
+    /* Levi 10-26: the finish says "nice job!" on the orb for a moment, in the count's face, then goes. */
+    .cheer{
+      position:absolute;inset:0;margin:0;
+      display:grid;place-items:center;
+      font-size:var(--t-count);font-weight:300;
+      letter-spacing:-.02em;line-height:1;
+      color:var(--paper-ink);
+      pointer-events:none;opacity:0;
+    }
 
     .tray{
       flex:none;
@@ -250,11 +259,29 @@
   .phase-words{gap:4px;flex-wrap:nowrap}
   .phase-words span{flex:1;text-align:center;padding:6px 10px;border-radius:6px;font-size:13px;line-height:18px;
        transition:background-color var(--dur-scene) var(--ease-scene),color var(--dur-scene) var(--ease-scene)}
-  .phase-words span.is-now{background:var(--accent-tint);color:var(--accent)}
+  .phase-words span.is-now{color:var(--accent)}
   /* Levi 10-26: the running phase has to be obvious at a glance. It leads by weight and size as well as the chip,
      the same rule the picker follows (Carbon, Stripe): semibold, 15px, in the accent; the rest stay regular and grey.
      Each word keeps its own equal column, so the change never moves its neighbours. */
-  .phase-words span.is-now{font-weight:600;font-size:15px}
+  /* Levi 10-26 r8: no jump as a phase starts, and the status rolls from word to word. One chip slides under the
+     row to the running word, and that word's weight, size and ink ease in on the same curve (Aspekta is variable,
+     so 400 to 600 interpolates). Nothing on the words is a transform, so there is no re-raster snap as it lands.
+     The chip is a step darker than the picker's tint (accent ink 5.48:1 on it). */
+  .phase-words{position:relative;isolation:isolate}
+  .phase .phase-words span{transition:color var(--dur-scene) var(--ease-scene)}
+  /* Levi 10-26 r9: easing the size and weight still nudged the letters a pixel each frame as the word re-laid out.
+     So each word is two fixed copies stacked in one cell, the plain grey one and the semibold accent one, and only
+     their opacity changes. No letter moves while the chip rolls, and the column's size never changes. */
+  .phase .phase-words span{display:grid;place-items:center}
+  .phase-words > span > b{grid-area:1/1;font-weight:400;white-space:nowrap;
+       transition:opacity var(--dur-scene) var(--ease-scene)}
+  .phase-words > span > b.w-now{font-weight:600;font-size:15px;color:var(--accent);opacity:0}
+  .phase-words > span.is-now > b.w-rest{opacity:0}
+  .phase-words > span.is-now > b.w-now{opacity:1}
+  .phase-chip{position:absolute;z-index:-1;top:0;left:0;height:100%;border-radius:6px;background:#C8D7C3;opacity:0;
+       transition:transform var(--dur-scene) var(--ease-scene),width var(--dur-scene) var(--ease-scene),opacity var(--dur-ui) var(--ease-ui)}
+  .phase-chip.is-on{opacity:1}
+  @media (prefers-reduced-motion:reduce){.phase-chip,.phase .phase-words span,.phase-words > span > b{transition-duration:.01ms}}
   .phase-track{height:4px;border-radius:2px;overflow:hidden}
   .phase-track i{background:var(--accent)}
   .cycle{font-variant-numeric:tabular-nums}
@@ -484,6 +511,7 @@
       <div class="stage" id="stage">
         <canvas id="disc" aria-hidden="true"></canvas>
         <p class="count" id="count" aria-hidden="true" hidden></p>
+        <p class="cheer" id="cheer" aria-hidden="true">nice job!</p>
       </div>
       <div class="tray">
         <div class="cycles" id="cycles" aria-hidden="true"></div>
@@ -584,6 +612,7 @@
     const trayEl = document.querySelector(".tray");
     const cycleEl = document.getElementById("cycle");
     const countEl = document.getElementById("count");
+    const cheerEl = document.getElementById("cheer");
     const goEl = document.getElementById("go");
     const backEl = document.getElementById("back");
     const stageEl = document.getElementById("stage");
@@ -686,7 +715,7 @@
     let frames = 0, ticks = 0;      // rAF frames, and reduced-motion ticks
     let raf = 0, rmT = 0, lastNow = 0;
     let cycleMarks = [], phaseMarks = [];
-    let spans = [];
+    let spans = [], chipEl = null;
 
     // Where the run is at `el` seconds: which cycle, which phase, and how far
     // into it. Everything on screen is derived from this and from one
@@ -715,6 +744,21 @@
       return from + (loc.p.disc - from) * smooth(loc.t / loc.p.seconds);
     }
 
+    // The chip sits under the running word's column. The columns are equal and do not move, so the chip's place
+    // is read off the column itself; a resize mid-run re-reads it.
+    function moveChip(i) {
+      const sp = spans[i];
+      if (!sp || !chipEl) return;
+      // Off, it lands in place without sliding in from the left edge; on, it slides.
+      const fresh = !chipEl.classList.contains("is-on");
+      if (fresh) chipEl.style.transition = "none";
+      chipEl.style.width = `${sp.offsetWidth}px`;
+      chipEl.style.transform = `translateX(${sp.offsetLeft}px)`;
+      if (fresh) { chipEl.offsetWidth; chipEl.style.transition = ""; }
+      chipEl.classList.add("is-on");
+    }
+    addEventListener("resize", () => { if (running && phaseIdx >= 0) moveChip(phaseIdx); });
+
     function setPhase(loc) {
       if (loc.i !== phaseIdx || loc.cycle !== cycleIdx) {
         if (loc.cycle !== cycleIdx || phaseIdx < 0) {
@@ -724,13 +768,9 @@
         phaseIdx = loc.i;
         phaseMarks.push(performance.now());
         for (let i = 0; i < spans.length; i++) spans[i].classList.toggle("is-now", i === loc.i);
-        // The word that starts settles in from a touch smaller, and the bar the last phase filled lets go as a
-        // fading ghost rather than snapping back to empty.
-        if (!mqRM.matches) {
-          spans[loc.i].animate([{ transform: "scale(.94)" }, { transform: "scale(1)" }],
-            { duration: 420, easing: "cubic-bezier(.34,1.56,.64,1)" });
-          if (loc.i === 0 && phaseMarks.length > 1) ghostEl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: "ease-out" });
-        }
+        moveChip(loc.i);
+        // The bar the last phase filled lets go as a fading ghost rather than snapping back to empty.
+        if (!mqRM.matches && loc.i === 0 && phaseMarks.length > 1) ghostEl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: "ease-out" });
         // Label only, once per phase. The countdown is not announced: a screen
         // reader reciting "three, two, one" over a breath is noise.
         sayEl.textContent = loc.p.label;
@@ -927,6 +967,7 @@
       phaseIdx = -1; cycleIdx = 0;
       cycleMarks = []; phaseMarks = [];
       goEl.textContent = "end";
+      uncheer();
       trayEl.classList.remove("is-done"); guideEl.classList.remove("is-done"); prog.done = false;
       for (const b of cSegs) b.style.transform = "scaleX(0)";
       if (mqRM.matches) {
@@ -978,7 +1019,21 @@
       if (Math.abs(squish.s) < 1e-4 && Math.abs(squish.vel) < 1e-3) squish.s = squish.vel = 0;
     }
     let bloomAt = -1;
+    // About two and a half seconds: rises in, holds, fades. Reduced motion keeps the words and drops the rise.
+    let cheerAnim = null;
+    function cheer() {
+      if (cheerAnim) cheerAnim.cancel();
+      const y = mqRM.matches ? "0" : "8px";
+      cheerAnim = cheerEl.animate([
+        { opacity: 0, transform: `translateY(${y})` },
+        { opacity: 1, transform: "translateY(0)", offset: 0.2 },
+        { opacity: 1, transform: "translateY(0)", offset: 0.76 },
+        { opacity: 0, transform: "translateY(0)" },
+      ], { duration: 2500, easing: "ease-out" });
+    }
+    function uncheer() { if (cheerAnim) { cheerAnim.cancel(); cheerAnim = null; } }
     function celebrate() {
+      cheer();
       if (mqRM.matches) return;
       bloomAt = performance.now();
       cSegs.forEach((b, i) => b.parentNode.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(2.2)" }, { transform: "scaleY(1)" }],
@@ -1015,9 +1070,10 @@
       done = !!finished;
       stopDrivers();
       for (const s of spans) s.classList.remove("is-now");
+      if (chipEl) chipEl.classList.remove("is-on");
       setFill(0, null);
       if (finished) celebrate();
-      sayEl.textContent = finished ? "done" : "stopped";
+      sayEl.textContent = finished ? "done, nice job!" : "stopped";
       goEl.textContent = finished ? "again" : "begin";
       restMeta(finished);
       countEl.hidden = true;
@@ -1040,9 +1096,17 @@
       opener = listEl.querySelector(`[data-ex="${next.slug}"]`);
       nameEl.textContent = next.name;
       wordsEl.textContent = "";
+      chipEl = document.createElement("i");
+      chipEl.className = "phase-chip";
+      wordsEl.append(chipEl);
       spans = next.phases.map(p => {
         const s = document.createElement("span");
-        s.textContent = p.label;
+        for (const k of ["w-rest", "w-now"]) {
+          const b = document.createElement("b");
+          b.className = k;
+          b.textContent = p.label;
+          s.append(b);
+        }
         wordsEl.append(s);
         return s;
       });
@@ -1054,6 +1118,7 @@
       goEl.textContent = "begin";
       restMeta(false);
       countEl.hidden = true; countEl.textContent = "";
+      uncheer();
       sayEl.textContent = "";
       onGuide = true;
       menuEl.classList.remove("is-on"); menuEl.inert = true;
@@ -1211,6 +1276,7 @@
       fill: +fillCur.toFixed(4),
       count: countEl.hidden ? null : countEl.textContent,
       say: sayEl.textContent,
+      cheer: +getComputedStyle(cheerEl).opacity,
       go: goEl.textContent,
       cycleSeconds: ex ? cycleSeconds(ex) : 0,
       totalSeconds: ex ? totalSeconds(ex) : 0,
