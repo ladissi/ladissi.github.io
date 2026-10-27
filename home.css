@@ -104,7 +104,14 @@ main > footer.contact { border-block-start: 1px solid var(--border); padding-blo
   .rail + .rail-body { margin-block-start: 0; }
   .rail .intro p { max-width: none; }
   .rail .contact { margin-block-start: auto; flex-direction: column; align-items: flex-start; gap: 12px; }
-  .rail-body { padding: 96px 0; }
+  /* A section the list jumps to lands with its label level with the name: the label's cap height on the name's, 108
+     from the top (the rail's 96, then the 40px line centred on the 56px photo, 104, and 4 more for the label's smaller
+     line). The first label rests there before any click, so the column starts at 108, not 96. */
+  .rail-body { padding: 108px 0 96px; }
+  .rail-body .section > h2 { scroll-margin-top: 108px; }
+  /* About ends the page, so without room after it neither its label nor awards' could come up to that line. The least
+     room that lets them: about is at least a screen less the 108 above its label and the 96 under the column. */
+  .rail-body .about { min-height: calc(100vh - 204px); min-height: calc(100dvh - 204px); }
 
   .rail-nav { display: flex; flex-direction: column; }
   .rail-nav a {
@@ -127,4 +134,13 @@ main > footer.contact { border-block-start: 1px solid var(--border); padding-blo
   }
   .rail-nav a:hover, .rail-nav a[aria-current] { color: var(--foreground); }
   .rail-nav a[aria-current]::before { width: 40px; }
+}
+
+/* Where a pick from the list landed (rail.js adds .landed and moves focus there): the label lights to ink, then settles
+   back to its grey over a second. Under reduced motion it holds in ink, still, until the reader scrolls on. The focus
+   ring is the kit's :focus-visible, so it shows only when the list was used from the keyboard. */
+.section > h2.type-section-title.landed { animation: landed 1s ease-out both; }
+@keyframes landed { from { color: var(--foreground); } to { color: var(--muted-foreground); } }
+@media (prefers-reduced-motion: reduce) {
+  .section > h2.type-section-title.landed { animation: none; color: var(--foreground); }
 }
