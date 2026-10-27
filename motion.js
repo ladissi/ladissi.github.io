@@ -84,6 +84,34 @@ function sample(img, x, y) {
   const d = g.getImageData(0, 0, 1, 1).data;
   return `rgb(${d[0]},${d[1]},${d[2]})`;
 }
+// The breathing still's disc, from its pixels: the centroid of the pixels more than 101 levels (sum of |r|+|g|+|b|)
+// off the ground at (60, 300) in the frame's middle (x 340 to 780, y 200 to 510, under the title and above the foot
+// on both stills so far), and its edge, the first ring past the disc's own area radius whose mean distance from the
+// ground is under 8, so the soft rim goes with it. f7c92fd's still reads (562.8, 342.3), area radius 100, edge 113;
+// 1ab2a74's read (559.6, 376.6), 94, 99. Nothing else is drawn within r 170 of either.
+function discOf(img) {
+  const W = img.naturalWidth, H = img.naturalHeight;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data;
+  const at = (x, y) => (y * W + x) * 4;
+  const gr = [0, 1, 2].map((i) => d[at(60, 300) + i]);
+  const off = (i) => Math.abs(d[i] - gr[0]) + Math.abs(d[i + 1] - gr[1]) + Math.abs(d[i + 2] - gr[2]);
+  let n = 0, sx = 0, sy = 0;
+  for (let y = 200; y < 510; y++) for (let x = 340; x < 780; x++) if (off(at(x, y)) > 101) { n++; sx += x; sy += y; }
+  const cx = sx / n, cy = sy / n, r = Math.sqrt(n / Math.PI);
+  const sum = new Float64Array(171), cnt = new Uint32Array(171);
+  for (let y = Math.max(0, Math.floor(cy - 170)); y < Math.min(H, cy + 170); y++)
+    for (let x = Math.max(0, Math.floor(cx - 170)); x < Math.min(W, cx + 170); x++) {
+      const k = Math.floor(Math.hypot(x - cx, y - cy));
+      if (k <= 170) { sum[k] += off(at(x, y)); cnt[k]++; }
+    }
+  let edge = Math.ceil(r);
+  while (edge < 170 && sum[edge] >= 8 * cnt[edge]) edge++;
+  return { cx, cy, r, edge };
+}
 
 /* ---------- breathe: the disc runs box breathing, four in, four hold, four out, four hold ---------- */
 
@@ -93,13 +121,11 @@ async function breathe(card) {
   const c = overlay(card, img);
   const g = c.getContext("2d");
   const IW = 1120, IH = 700;
-  // The disc in the 1120 frame, as img/breathe-1120.webp has it since 1ab2a74 (moss, layout B). Measured once from
-  // that file's pixels: the pixels more than 101 levels (sum of |r|+|g|+|b|) off the ground at (60, 300) have their
-  // centroid at (559.6, 376.6), and the mean distance from the ground, ring by ring around (560, 377), falls through
-  // half its inside value at r 95 and to 0 by r 110. Nothing else is drawn within r 180 of it. The old 560, 302, 152
-  // was the disc of the still before 1ab2a74, and on today's still it filled a ground circle over the top of the disc
-  // and scaled a patch above it, so the card painted a cut, lopsided disc (Levi 10-25: "the circle isnt circular").
-  const CX = 560, CY = 377, R = 95;
+  // The disc in the 1120 frame, measured from img/breathe-1120.webp's own pixels each load (discOf), so a re-shot
+  // still cannot leave the canvas painting the old disc. Twice a number kept in this file went stale: 560, 302, 152
+  // after 1ab2a74 re-shot the still (Levi 10-25: "the circle isnt circular"), then 560, 377, 95 after f7c92fd moved
+  // the disc to about (563, 342), r 100, and the card filled a ground circle 35px low under a crescent of the real disc.
+  const { cx: CX, cy: CY, edge: E } = discOf(src);
   const ground = sample(src, 60, 300);
   // breathe.html's box exercise: where each phase ends, 0 empty to 1 full.
   const phases = [{ s: 4, d: 1 }, { s: 4, d: 1 }, { s: 4, d: 0 }, { s: 4, d: 0 }];
@@ -124,12 +150,12 @@ async function breathe(card) {
     g.setTransform(k, 0, 0, k, 0, 0);
     g.drawImage(src, 0, 0);
     g.fillStyle = ground;
-    g.beginPath(); g.arc(CX, CY, R * 1.12, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(CX, CY, E + 4, 0, Math.PI * 2); g.fill();
     const s = scaleOf(v);
     g.save();
-    g.beginPath(); g.arc(CX, CY, R * 1.04 * s, 0, Math.PI * 2); g.clip();
+    g.beginPath(); g.arc(CX, CY, E * s, 0, Math.PI * 2); g.clip();
     g.translate(CX, CY); g.scale(s, s); g.translate(-CX, -CY);
-    g.drawImage(src, CX - R * 1.1, CY - R * 1.1, R * 2.2, R * 2.2, CX - R * 1.1, CY - R * 1.1, R * 2.2, R * 2.2);
+    g.drawImage(src, CX - E - 4, CY - E - 4, 2 * E + 8, 2 * E + 8, CX - E - 4, CY - E - 4, 2 * E + 8, 2 * E + 8);
     g.restore();
   }
   let t = T0;
